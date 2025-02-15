@@ -25,7 +25,7 @@ void display_prompt() { cout << "$ " << flush; }
  * @param input_line A pointer to the dynamically allocated memory for user
  * input. This memory is freed to avoid memory leaks.
  */
-void cleanup(list<Process *> &process_list, const char *input_line) {
+void cleanup(list<Process *> &process_list, char *input_line) {
   for (Process *p : process_list) {
     delete p;
   }
@@ -73,21 +73,26 @@ void cleanup(list<Process *> &process_list, const char *input_line) {
 void run() {
   list<Process *> process_list;
   //char *input_line;
-  string input_line;
+  std::string input_line;
   bool is_quit = false;
   
   while(is_quit == false) {
-  display_prompt();
-  cout << "tsh> " ;
-  read_input() = input_line; 
-  parse_input(input_line, process_list);
-  cout << &process_list << endl; 
+    display_prompt();
+    cout << "tsh> " ;
+    input_line = read_input(); 
+    //cout << input_line << endl;
+    parse_input(input_line, process_list);
+    for (Process *p : process_list){
+      cout << p << ', ' << endl; 
+      is_quit = isQuit(p);
+      cout << is_quit << endl;  
+    }
   //cin >> input_line;
   //cout << read_input() << endl;
   //cout << input_line << endl; 
   } 
-  const char *cleanCMD = input_line.c_str();
-  cleanup(process_list, cleanCMD); 
+
+
 
 
 
@@ -118,8 +123,8 @@ std::string read_input() {
   //size_t inputlen = 0, templen = 0;
   string input ;   
 
-  cin >> input; 
-
+  getline(cin, input); 
+  //cout << input << endl; 
   return input;
 }
 
@@ -161,52 +166,68 @@ void parse_input(std::string cmd, list<Process *> &process_list) {
   Process *currProcess = nullptr;
   std::string tempWord; 
 
-  for (unsigned i = 0; i<cmd.length(); ++i)
+  //cout << cmd << endl; 
+
+  for (std::string::size_type i = 0; i<cmd.size(); ++i)
   {
     if (cmd[i] == ' '){
-      if (!tempWord.empty()){
+      cout << "found SPACE" << endl; 
+      //if (!tempWord.empty()){
         if (!currProcess){
           currProcess = new Process(pipe_in_val, 0);
           process_list.push_back(currProcess);
+          cout << "found SPACE, creating Process" << endl; 
+
         }
         tempWord.append(1, '\0');
         char tempArr[tempWord.length()];
         strcpy(tempArr, tempWord.c_str()); 
         currProcess->add_token(tempArr);
         tempWord.clear();
-      }
+        cout << "found SPACE, adding Word" << endl; 
+
+      //}
     }
     else if (cmd[i] == '|'){
-      if (!tempWord.empty()){
-        if (!currProcess){
+      cout << "found |" << endl; 
+      //if (!tempWord.empty()){
+        //if (!currProcess){
           currProcess = new Process(pipe_in_val, 0);
           process_list.push_back(currProcess);
-        }
+          cout << "found |, creating Process" << endl; 
 
-        tempWord.append(1, '\0');
+        //}
+
+        /*tempWord.append(1, '\0');
         char tempArr[tempWord.length()];
         strcpy(tempArr, tempWord.c_str()); 
         currProcess->add_token(tempArr);
         tempWord.clear();
-      }
+        cout << "found |, adding word to list" << endl; */ 
+      //}
       pipe_in_val = 1; 
       currProcess == nullptr;
 
     }
     else if (cmd[i] == ';')
     {
-      if (!tempWord.empty()){
-        if (!currProcess){
+      cout << "found ;" << endl; 
+      //if (!tempWord.empty()){
+        //if (!currProcess){
           currProcess = new Process(pipe_in_val, 0);
           process_list.push_back(currProcess);
-        }
+          cout << "found ;, creating Process" << endl; 
 
-        tempWord.append(1, '\0');
+        //}
+
+        /*tempWord.append(1, '\0');
         char tempArr[tempWord.length()];
         strcpy(tempArr, tempWord.c_str()); 
         currProcess->add_token(tempArr);
         tempWord.clear();
-      }
+        cout << "found ;, adding word to list" << endl; */ 
+
+      //}
       pipe_in_val = 0; 
       currProcess == nullptr;
     }
@@ -214,6 +235,21 @@ void parse_input(std::string cmd, list<Process *> &process_list) {
     {
       tempWord += cmd[i]; 
     }
+
+  }
+  if (!tempWord.empty()){
+    if (!currProcess){
+      currProcess = new Process(pipe_in_val, 0);
+      process_list.push_back(currProcess);
+      cout << "creating Process" << endl; 
+
+    }
+    //tempWord.append(1, '\0');
+    char tempArr[tempWord.length()];
+    strcpy(tempArr, tempWord.c_str()); 
+    currProcess->add_token(tempArr);
+    tempWord.clear();
+    cout << "adding Word" << endl; 
   }
 
 
@@ -233,6 +269,16 @@ void parse_input(std::string cmd, list<Process *> &process_list) {
  *   - false otherwise.
  */
 bool isQuit(Process *p) {
+  for (int j = 0; j < 25; ++j){
+    if (p->cmdTokens[j] != nullptr){
+      cout << "Token: " << p->cmdTokens[j] << endl;
+      if (strcmp(p->cmdTokens[j], "quit") == 0) {
+        cout << "SEEN" << endl; 
+        return true;
+      }
+    }
+  }
+  return false; 
 }
 
 /**
@@ -306,12 +352,21 @@ Process::Process(int _pipe_in, int _pipe_out) {
   pipe_in = _pipe_in;
   pipe_out = _pipe_out;
   i = 0;
+  for (int j = 0; j < 25; j++){
+    cmdTokens[i] = nullptr; 
+  }
 }
 
 /**
  * @brief Destructor for Process class.
  */
-Process::~Process() {}
+Process::~Process() {
+  for (int j = 0; j < 25; j++){
+    if (cmdTokens[i] != nullptr){
+      delete[] cmdTokens[i];
+    }
+  }
+}
 
 /**
  * @brief add a pointer to a command or flags to cmdTokens
@@ -319,4 +374,12 @@ Process::~Process() {}
  * @param tok 
  */
 void Process::add_token(char *tok) {
+  if (i < 25){
+    cmdTokens[i] = new char [strlen(tok) + 1];
+    strcpy(cmdTokens[i], tok); 
+    i++;
+  }
+  else {
+    std::cerr << "ERR:TOKEN LIST IS FULL" << endl;
+  }
 }
