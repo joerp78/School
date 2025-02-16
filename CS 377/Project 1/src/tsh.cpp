@@ -72,25 +72,24 @@ void cleanup(list<Process *> &process_list, char *input_line) {
  */
 void run() {
   list<Process *> process_list;
-  //char *input_line;
-  std::string input_line;
+  char *input_line;
   bool is_quit = false;
   
   while(is_quit == false) {
     display_prompt();
     cout << "tsh> " ;
-    input_line = read_input(); 
-    //cout << input_line << endl;
+    input_line = read_input();  
     parse_input(input_line, process_list);
     for (Process *p : process_list){
       cout << p << ', ' << endl; 
       is_quit = isQuit(p);
       cout << is_quit << endl;  
     }
-  //cin >> input_line;
-  //cout << read_input() << endl;
-  //cout << input_line << endl; 
+ 
+
   } 
+
+  cleanup(process_list, input_line);
 
 
 
@@ -117,14 +116,33 @@ void run() {
  * @warning Ensure that the memory allocated by this function is freed using
  * free() to avoid memory leaks.
  */
-std::string read_input() {
-  //char *input = NULL;
-  //char tempbuf[MAX_LINE];
-  //size_t inputlen = 0, templen = 0;
-  string input ;   
+char *read_input() {
+  char *input = NULL;
+  size_t inputlen = 0;
 
-  getline(cin, input); 
-  //cout << input << endl; 
+  input = (char*) malloc(MAX_LINE * sizeof(char));
+  if (input == NULL){
+    printf("MEM NOT ALLOCATED INITIALLY\n");
+    return NULL; 
+  }
+
+
+  if (fgets(input, MAX_LINE, stdin) == NULL){
+    free(input);
+    return NULL;  
+  }
+
+  inputlen = strlen(input); 
+  input = (char*) realloc(input, inputlen * sizeof(char));
+  if (input == NULL){
+    printf("MEM NOT ALLOCATED REALLOC\n");
+    return NULL; 
+  }
+  
+  printf("%d\n",inputlen);
+  printf("%s\n",input);
+
+
   return input;
 }
 
@@ -132,7 +150,13 @@ std::string read_input() {
  * @brief
  * removes the new line char of the end in cmd. 
  */
-void senetize(char *cmd) {
+void senetize(char* cmd) {
+  for (char *c = cmd; *c != '\0'; ++c){
+    //printf("%c\n", *c); 
+    if (strcmp(c,"\n") == 0){
+        *c = NULL; 
+    }
+  }
 }
 
 
@@ -161,18 +185,22 @@ void senetize(char *cmd) {
  *       of '|' in the original command.
  * - The created Process objects are added to the process_list.
  */
-void parse_input(std::string cmd, list<Process *> &process_list) {
+
+void parse_input(char *cmd, list<Process *> &process_list) {
   int pipe_in_val = 0;
   Process *currProcess = nullptr;
   std::string tempWord; 
+  senetize(cmd); 
+  size_t cmdLen; 
+  
+  cmdLen = strlen(cmd); 
 
-  //cout << cmd << endl; 
+  cout << cmdLen << endl; 
 
-  for (std::string::size_type i = 0; i<cmd.size(); ++i)
+  for (int i = 0; i<cmdLen; ++i)
   {
     if (cmd[i] == ' '){
       cout << "found SPACE" << endl; 
-      //if (!tempWord.empty()){
         if (!currProcess){
           currProcess = new Process(pipe_in_val, 0);
           process_list.push_back(currProcess);
@@ -186,25 +214,13 @@ void parse_input(std::string cmd, list<Process *> &process_list) {
         tempWord.clear();
         cout << "found SPACE, adding Word" << endl; 
 
-      //}
     }
     else if (cmd[i] == '|'){
       cout << "found |" << endl; 
-      //if (!tempWord.empty()){
-        //if (!currProcess){
-          currProcess = new Process(pipe_in_val, 0);
-          process_list.push_back(currProcess);
-          cout << "found |, creating Process" << endl; 
+      currProcess = new Process(pipe_in_val, 0);
+      process_list.push_back(currProcess);
+      cout << "found |, creating Process" << endl; 
 
-        //}
-
-        /*tempWord.append(1, '\0');
-        char tempArr[tempWord.length()];
-        strcpy(tempArr, tempWord.c_str()); 
-        currProcess->add_token(tempArr);
-        tempWord.clear();
-        cout << "found |, adding word to list" << endl; */ 
-      //}
       pipe_in_val = 1; 
       currProcess == nullptr;
 
@@ -212,22 +228,11 @@ void parse_input(std::string cmd, list<Process *> &process_list) {
     else if (cmd[i] == ';')
     {
       cout << "found ;" << endl; 
-      //if (!tempWord.empty()){
-        //if (!currProcess){
-          currProcess = new Process(pipe_in_val, 0);
-          process_list.push_back(currProcess);
-          cout << "found ;, creating Process" << endl; 
+      
+      currProcess = new Process(pipe_in_val, 0);
+      process_list.push_back(currProcess);
+      cout << "found ;, creating Process" << endl; 
 
-        //}
-
-        /*tempWord.append(1, '\0');
-        char tempArr[tempWord.length()];
-        strcpy(tempArr, tempWord.c_str()); 
-        currProcess->add_token(tempArr);
-        tempWord.clear();
-        cout << "found ;, adding word to list" << endl; */ 
-
-      //}
       pipe_in_val = 0; 
       currProcess == nullptr;
     }
@@ -254,6 +259,7 @@ void parse_input(std::string cmd, list<Process *> &process_list) {
 
 
 }
+
 
 /**
  * Check if the given command represents a quit request.

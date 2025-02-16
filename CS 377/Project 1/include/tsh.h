@@ -44,9 +44,10 @@ class Process {
 
 void run();
 void display_prompt();
-void cleanup(list<Process *> &process_list, const char *input_line);
-std::string read_input();
-void parse_input(std::string input_line, list<Process *> &process_list);
+void cleanup(list<Process *> &process_list, char *input_line);
+//std::string read_input();
+char *read_input();
+void parse_input(char *input_line, list<Process *> &process_list);
 bool run_commands(list<Process *> &command_list);
 bool isQuit(Process *process);
 
