@@ -30,6 +30,7 @@ void cleanup(list<Process *> &process_list, char *input_line) {
     delete p;
   }
   process_list.clear();
+  printf(input_line); 
   free(input_line);
   input_line = nullptr;
 }
@@ -80,12 +81,7 @@ void run() {
     cout << "tsh> " ;
     input_line = read_input();  
     parse_input(input_line, process_list);
-    for (Process *p : process_list){
-      cout << p << ', ' << endl; 
-      is_quit = isQuit(p);
-      cout << is_quit << endl;  
-    }
- 
+    if (run_commands(process_list) == true) is_quit = true;  
 
   } 
 
@@ -128,6 +124,7 @@ char *read_input() {
 
 
   if (fgets(input, MAX_LINE, stdin) == NULL){
+    printf(input); 
     free(input);
     return NULL;  
   }
@@ -139,8 +136,8 @@ char *read_input() {
     return NULL; 
   }
   
-  printf("%d\n",inputlen);
-  printf("%s\n",input);
+  //printf("%d\n",inputlen);
+  //printf("%s\n",input);
 
 
   return input;
@@ -153,8 +150,8 @@ char *read_input() {
 void senetize(char* cmd) {
   for (char *c = cmd; *c != '\0'; ++c){
     //printf("%c\n", *c); 
-    if (strcmp(c,"\n") == 0){
-        *c = NULL; 
+    if (*c == '\n'){
+        *c = '\0'; 
     }
   }
 }
@@ -189,74 +186,76 @@ void senetize(char* cmd) {
 void parse_input(char *cmd, list<Process *> &process_list) {
   int pipe_in_val = 0;
   Process *currProcess = nullptr;
-  std::string tempWord; 
   senetize(cmd); 
-  size_t cmdLen; 
-  
-  cmdLen = strlen(cmd); 
+  size_t cmdLen = strlen(cmd);; 
+    
+  char *tempWord = (char*) malloc((cmdLen + 1)  * sizeof(char));
+  int tempIndex = 0; 
+
 
   cout << cmdLen << endl; 
 
   for (int i = 0; i<cmdLen; ++i)
   {
     if (cmd[i] == ' '){
-      cout << "found SPACE" << endl; 
+      //cout << "found SPACE" << endl; 
+      tempWord[tempIndex++] = '\0';
         if (!currProcess){
           currProcess = new Process(pipe_in_val, 0);
           process_list.push_back(currProcess);
-          cout << "found SPACE, creating Process" << endl; 
+          //cout << "found SPACE, creating Process" << endl; 
 
         }
-        tempWord.append(1, '\0');
-        char tempArr[tempWord.length()];
-        strcpy(tempArr, tempWord.c_str()); 
-        currProcess->add_token(tempArr);
-        tempWord.clear();
-        cout << "found SPACE, adding Word" << endl; 
+        tempWord[tempIndex] = '\0'; 
+        currProcess->add_token(tempWord);
+        tempIndex = 0;
+        //cout << "found SPACE, adding Word" << endl; 
 
     }
     else if (cmd[i] == '|'){
-      cout << "found |" << endl; 
+      //cout << "found |" << endl; 
       currProcess = new Process(pipe_in_val, 0);
       process_list.push_back(currProcess);
-      cout << "found |, creating Process" << endl; 
+      //cout << "found |, creating Process" << endl; 
 
       pipe_in_val = 1; 
-      currProcess == nullptr;
+      currProcess = nullptr;
 
     }
     else if (cmd[i] == ';')
     {
-      cout << "found ;" << endl; 
+      //cout << "found ;" << endl; 
       
       currProcess = new Process(pipe_in_val, 0);
       process_list.push_back(currProcess);
-      cout << "found ;, creating Process" << endl; 
+      //cout << "found ;, creating Process" << endl; 
 
       pipe_in_val = 0; 
-      currProcess == nullptr;
+      currProcess = nullptr;
     }
     else 
     {
-      tempWord += cmd[i]; 
+      tempWord[tempIndex++] = cmd[i]; 
     }
 
   }
-  if (!tempWord.empty()){
+  if (tempIndex > 0){
+    tempWord[tempIndex++] = '\0';
     if (!currProcess){
       currProcess = new Process(pipe_in_val, 0);
       process_list.push_back(currProcess);
-      cout << "creating Process" << endl; 
+      //cout << "creating Process" << endl; 
 
     }
-    //tempWord.append(1, '\0');
-    char tempArr[tempWord.length()];
-    strcpy(tempArr, tempWord.c_str()); 
-    currProcess->add_token(tempArr);
-    tempWord.clear();
-    cout << "adding Word" << endl; 
+  
+    cout << tempWord << endl;
+    int wordLen = strlen(tempWord);
+    tempWord[tempIndex] = '\0'; 
+    currProcess->add_token(tempWord);
+    //cout << "adding Word" << endl; 
   }
 
+  free(tempWord);
 
 }
 
@@ -277,9 +276,9 @@ void parse_input(char *cmd, list<Process *> &process_list) {
 bool isQuit(Process *p) {
   for (int j = 0; j < 25; ++j){
     if (p->cmdTokens[j] != nullptr){
-      cout << "Token: " << p->cmdTokens[j] << endl;
+      //cout << "Token: " << p->cmdTokens[j] << endl;
       if (strcmp(p->cmdTokens[j], "quit") == 0) {
-        cout << "SEEN" << endl; 
+        //cout << "SEEN" << endl; 
         return true;
       }
     }
@@ -341,6 +340,31 @@ bool run_commands(list<Process *> &command_list) {
   int size = command_list.size();
   pid_t pids[size];
   Process *prev = nullptr;
+
+  
+
+  for (Process *p : command_list){
+    if(isQuit(p) == true) return (is_quit = true); 
+
+
+    for (char *c : p->cmdTokens){
+      //char *command = p->cmdTokens[1]; 
+      printf("%s", c);
+      //while(c != '\0'){
+
+      }
+    }
+    printf("\n\n\n");
+
+    if (p->pipe_in = 1){
+    } 
+
+    if (p->pipe_out = 1){
+    }
+
+
+        
+  }
 
   return is_quit;
 }
