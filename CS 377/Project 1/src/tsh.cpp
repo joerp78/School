@@ -124,7 +124,7 @@ char *read_input() {
 
 
   if (fgets(input, MAX_LINE, stdin) == NULL){
-    printf(input); 
+    //printf(input); 
     free(input);
     return NULL;  
   }
@@ -193,28 +193,31 @@ void parse_input(char *cmd, list<Process *> &process_list) {
   int tempIndex = 0; 
 
 
-  cout << cmdLen << endl; 
+  //cout << cmdLen << endl; 
 
   for (int i = 0; i<cmdLen; ++i)
   {
     if (cmd[i] == ' '){
       //cout << "found SPACE" << endl; 
-      tempWord[tempIndex++] = '\0';
+      //tempWord[tempIndex++] = '\0';
         if (!currProcess){
           currProcess = new Process(pipe_in_val, 0);
           process_list.push_back(currProcess);
           //cout << "found SPACE, creating Process" << endl; 
 
         }
-        tempWord[tempIndex] = '\0'; 
+        tempWord[tempIndex++] = '\0'; 
         currProcess->add_token(tempWord);
         tempIndex = 0;
         //cout << "found SPACE, adding Word" << endl; 
 
     }
     else if (cmd[i] == '|'){
+      if (currProcess){
+        currProcess->pipe_out = 1; 
+      }
       //cout << "found |" << endl; 
-      currProcess = new Process(pipe_in_val, 0);
+      currProcess = new Process(1, 0);
       process_list.push_back(currProcess);
       //cout << "found |, creating Process" << endl; 
 
@@ -226,7 +229,7 @@ void parse_input(char *cmd, list<Process *> &process_list) {
     {
       //cout << "found ;" << endl; 
       
-      currProcess = new Process(pipe_in_val, 0);
+      currProcess = new Process(0, 0);
       process_list.push_back(currProcess);
       //cout << "found ;, creating Process" << endl; 
 
@@ -240,7 +243,7 @@ void parse_input(char *cmd, list<Process *> &process_list) {
 
   }
   if (tempIndex > 0){
-    tempWord[tempIndex++] = '\0';
+    //tempWord[tempIndex++] = '\0';
     if (!currProcess){
       currProcess = new Process(pipe_in_val, 0);
       process_list.push_back(currProcess);
@@ -248,9 +251,9 @@ void parse_input(char *cmd, list<Process *> &process_list) {
 
     }
   
-    cout << tempWord << endl;
+    //cout << tempWord << endl;
     int wordLen = strlen(tempWord);
-    tempWord[tempIndex] = '\0'; 
+    tempWord[tempIndex++] = '\0'; 
     currProcess->add_token(tempWord);
     //cout << "adding Word" << endl; 
   }
@@ -278,7 +281,7 @@ bool isQuit(Process *p) {
     if (p->cmdTokens[j] != nullptr){
       //cout << "Token: " << p->cmdTokens[j] << endl;
       if (strcmp(p->cmdTokens[j], "quit") == 0) {
-        //cout << "SEEN" << endl; 
+        cout << endl; 
         return true;
       }
     }
@@ -333,43 +336,142 @@ bool isQuit(Process *p) {
  * - Students should understand the basics of forking, pipes, and process
  * execution in Unix-like systems.
  */
-bool run_commands(list<Process *> &command_list) {
+
+bool run_commands(list<Process *> &command_list) 
+{
   bool is_quit = false;
-  int i = 0;
-  int j = 0;
   int size = command_list.size();
-  pid_t pids[size];
+  //pid_t pids[size];
+  vector<pid_t> pids;
   Process *prev = nullptr;
 
-  
+  int pPipe[2], nPipe[2];
+  bool has_prevPipe = false;  
 
-  for (Process *p : command_list){
-    if(isQuit(p) == true) return (is_quit = true); 
+  for (Process *p : command_list)
+  {
+    if(isQuit(p)) return (is_quit = true); 
 
+    char *command = p->cmdTokens[0];
+    cout << command << endl; 
+    char *tempArg[25] = {};
+    int tempIndex = 0; 
 
-    for (char *c : p->cmdTokens){
-      //char *command = p->cmdTokens[1]; 
-      printf("%s", c);
-      //while(c != '\0'){
+    for (char *c : p->cmdTokens)
+    {
+      if (c == nullptr) break;
+      tempArg[tempIndex++] = c; 
+      
+    }
+    tempArg[tempIndex] = nullptr; 
 
+    bool needs_pipeOut = (p->pipe_out == 1);  
+    if (needs_pipeOut){
+      if(pipe(nPipe) < 0)
+          {
+            perror("PIPE FAILED");
+            return false; 
+          }
+        else printf("PIPE CREATED\n");
       }
-    }
-    printf("\n\n\n");
 
-    if (p->pipe_in = 1){
-    } 
-
-    if (p->pipe_out = 1){
+    pid_t pid = fork();
+    if (pid == -1){
+      perror("FORK FAILED");
+      return false;
     }
 
 
-        
+
+
+    if (pid == 0){
+      if (p->pipe_in == 1 && has_prevPipe){
+            dup2(pPipe[0], STDIN_FILENO); 
+            close(pPipe[0]);
+            close(pPipe[1]); 
+        }
+    
+        if (needs_pipeOut){
+          dup2(nPipe[1], STDOUT_FILENO); 
+          close(nPipe[0]);
+          close(nPipe[1]); 
+      }
+      
+      /* if (p->pipe_in == 1 && has_prevPipe) {
+          dup2(pPipe[0], STDIN_FILENO); 
+        }
+        if (needs_pipeOut) {
+            dup2(nPipe[1], STDOUT_FILENO); 
+        }
+
+        close(pPipe[0]); close(pPipe[1]); 
+        close(nPipe[0]); close(nPipe[1]);   
+
+        if (p->pipe_in == 1 & p->pipe_out == 1){
+            dup2(fd[0],0); //STDIN replaced by IN Pipe
+            dup2(fd[1],1); //STDOUT replaced by OUT Pipe
+        }
+            else if(p->pipe_in = 1){
+              printf("PIPE IN TRUE\n");
+              dup2(fd[0],0); //STDIN replaced by IN Pipe
+              close(fd[1]);
+            }
+
+            else if(p->pipe_out = 1){
+              printf("PIPE OUT TRUE\n");
+              dup2(fd[1],1); //STDOUT replaced by OUT Pipe
+              close(fd[0]); 
+            }*/ 
+
+        // Debugging: Print the command and arguments
+        cout << "Executing command: " << command << "\n";
+        for (int i = 0; tempArg[i] != nullptr; ++i) {
+          cout << "Arg[" << i << "]: " << tempArg[i] << "\n";
+        }
+
+        execvp(command, tempArg); 
+        perror("EXEC FAILED");
+        exit(EXIT_FAILURE);
+    }
+    /*
+    if (p->pipe_out == 1){
+      close(fd[1]);
+    }
+    if (p->pipe_in == 1){
+      close(fd[0]);
+    }
+    */
+    pids.push_back(pid); 
+
+    if(has_prevPipe){
+      close(pPipe[0]);
+      close(pPipe[1]);
+    }
+
+    if (needs_pipeOut){
+      pPipe[0] = nPipe[0];
+      pPipe[1] = nPipe[1];
+      has_prevPipe = true;
+    }
+    else has_prevPipe = false; 
+
+
   }
 
+for (pid_t pid : pids){
+  int status; 
+  waitpid(pid, &status, 0);
+  if (WIFEXITED(status)) {
+    printf("Process %d exited with status %d\n", pid, WEXITSTATUS(status));
+  } 
+  else {
+    printf("Process %d terminated abnormally\n", pid);
+  }
+}
   return is_quit;
 }
 
-/**
+/** bs
  * @brief Constructor for Process class.
  *
  * Initializes a Process object with the provided command string, input pipe,
@@ -383,7 +485,7 @@ Process::Process(int _pipe_in, int _pipe_out) {
   pipe_out = _pipe_out;
   i = 0;
   for (int j = 0; j < 25; j++){
-    cmdTokens[i] = nullptr; 
+    cmdTokens[j] = nullptr; 
   }
 }
 
@@ -392,8 +494,8 @@ Process::Process(int _pipe_in, int _pipe_out) {
  */
 Process::~Process() {
   for (int j = 0; j < 25; j++){
-    if (cmdTokens[i] != nullptr){
-      delete[] cmdTokens[i];
+    if (cmdTokens[j] != nullptr){
+      delete[] cmdTokens[j];
     }
   }
 }

@@ -6,7 +6,7 @@ _TOBJ = test.o
 APPBIN = tsh_app
 TESTBIN = tsh_test
 
-DEBUG = #-DDEBUGMODE
+DEBUG = -DDEBUGMODE
 
 
 IDIR = include
