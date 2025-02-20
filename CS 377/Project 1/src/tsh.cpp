@@ -30,7 +30,6 @@ void cleanup(list<Process *> &process_list, char *input_line) {
     delete p;
   }
   process_list.clear();
-  printf(input_line); 
   free(input_line);
   input_line = nullptr;
 }
@@ -75,23 +74,19 @@ void run() {
   list<Process *> process_list;
   char *input_line;
   bool is_quit = false;
+  bool status; 
   
   while(is_quit == false) {
     display_prompt();
     cout << "tsh> " ;
     input_line = read_input();  
     parse_input(input_line, process_list);
-    if (run_commands(process_list) == true) is_quit = true;  
-
+    status = run_commands(process_list);  
+    sleep(1);
+    is_quit = status; 
   } 
 
   cleanup(process_list, input_line);
-
-
-
-
-
-
 }
 
 /**
@@ -115,6 +110,7 @@ void run() {
 char *read_input() {
   char *input = NULL;
   size_t inputlen = 0;
+  fflush(stdin); 
 
   input = (char*) malloc(MAX_LINE * sizeof(char));
   if (input == NULL){
@@ -122,19 +118,37 @@ char *read_input() {
     return NULL; 
   }
 
-
+  clearerr(stdin);
   if (fgets(input, MAX_LINE, stdin) == NULL){
-    //printf(input); 
+    perror("fgets failed");
     free(input);
     return NULL;  
   }
 
+  if (input[0] == '\n') {
+    free(input);
+    return NULL;
+}
+  cout << input << endl;
+
   inputlen = strlen(input); 
-  input = (char*) realloc(input, inputlen * sizeof(char));
-  if (input == NULL){
+  if (inputlen > 0 && input[inputlen - 1] == '\n'){
+    input[inputlen - 1] = '\0'; 
+    inputlen--;
+  }
+
+  if (inputlen == 0) {
+    free(input);
+    return NULL;
+}
+
+  char *temp = (char*) realloc(input, (inputlen + 1) * sizeof(char));
+  if (temp == NULL){
     printf("MEM NOT ALLOCATED REALLOC\n");
+    free(input);
     return NULL; 
   }
+  input = temp; 
   
   //printf("%d\n",inputlen);
   //printf("%s\n",input);
@@ -148,6 +162,8 @@ char *read_input() {
  * removes the new line char of the end in cmd. 
  */
 void senetize(char* cmd) {
+  if (cmd == nullptr){return;}
+
   for (char *c = cmd; *c != '\0'; ++c){
     //printf("%c\n", *c); 
     if (*c == '\n'){
@@ -186,6 +202,13 @@ void senetize(char* cmd) {
 void parse_input(char *cmd, list<Process *> &process_list) {
   int pipe_in_val = 0;
   Process *currProcess = nullptr;
+  
+  
+  if (cmd == nullptr){
+    cerr << "Error : Receieved Null Command Input." << endl;
+    return;
+  }
+  
   senetize(cmd); 
   size_t cmdLen = strlen(cmd);; 
     
@@ -199,18 +222,19 @@ void parse_input(char *cmd, list<Process *> &process_list) {
   {
     if (cmd[i] == ' '){
       //cout << "found SPACE" << endl; 
-      //tempWord[tempIndex++] = '\0';
+    if (tempIndex >0){
+      tempWord[tempIndex++] = '\0';
         if (!currProcess){
           currProcess = new Process(pipe_in_val, 0);
           process_list.push_back(currProcess);
           //cout << "found SPACE, creating Process" << endl; 
 
         }
-        tempWord[tempIndex++] = '\0'; 
+        //tempWord[tempIndex++] = '\0'; 
         currProcess->add_token(tempWord);
         tempIndex = 0;
         //cout << "found SPACE, adding Word" << endl; 
-
+      }
     }
     else if (cmd[i] == '|'){
       if (currProcess){
@@ -281,7 +305,7 @@ bool isQuit(Process *p) {
     if (p->cmdTokens[j] != nullptr){
       //cout << "Token: " << p->cmdTokens[j] << endl;
       if (strcmp(p->cmdTokens[j], "quit") == 0) {
-        cout << endl; 
+        //cout << endl; 
         return true;
       }
     }
@@ -348,31 +372,42 @@ bool run_commands(list<Process *> &command_list)
   int pPipe[2], nPipe[2];
   bool has_prevPipe = false;  
 
-  for (Process *p : command_list)
+  //for (Process *p : command_list)
+  for (int p = 0; p < size; p++)
   {
-    if(isQuit(p)) return (is_quit = true); 
+    //cout << p->cmdTokens[1] << endl; 
+    std::list<Process*>::iterator it = command_list.begin();
+    std::advance(it, p);
+    Process* proc = *it;    
+    
+    if(isQuit(proc)) return (is_quit = true); 
 
-    char *command = p->cmdTokens[0];
-    cout << command << endl; 
+    if (!proc || !proc->cmdTokens[0]) {
+      //cerr << "Invalid command at index " << p << endl;
+      continue;
+  }
+    //cout << command << endl; 
+    
+    char *command = proc->cmdTokens[0];
     char *tempArg[25] = {};
     int tempIndex = 0; 
 
-    for (char *c : p->cmdTokens)
+    for (char **c = proc->cmdTokens; *c != nullptr; ++c)
     {
-      if (c == nullptr) break;
-      tempArg[tempIndex++] = c; 
-      
+      tempArg[tempIndex++] = *c;  
+      //cout << *c << endl;     
     }
     tempArg[tempIndex] = nullptr; 
 
-    bool needs_pipeOut = (p->pipe_out == 1);  
+
+    bool needs_pipeOut = (proc->pipe_out == 1);  
     if (needs_pipeOut){
       if(pipe(nPipe) < 0)
           {
             perror("PIPE FAILED");
             return false; 
           }
-        else printf("PIPE CREATED\n");
+        //else printf("PIPE CREATED\n");
       }
 
     pid_t pid = fork();
@@ -381,11 +416,17 @@ bool run_commands(list<Process *> &command_list)
       return false;
     }
 
-
+    //cout << command << endl;
+    //cout << tempArg[0] << endl; 
+        // Debugging: Print the command and arguments
+        //cout << "Executing command: " << command << "\n";
+        for (int i = 0; tempArg[i] != nullptr; ++i) {
+          //cout << "Arg[" << i << "]: " << tempArg[i] << "\n";
+        }    
 
 
     if (pid == 0){
-      if (p->pipe_in == 1 && has_prevPipe){
+      if (proc->pipe_in == 1 && has_prevPipe){
             dup2(pPipe[0], STDIN_FILENO); 
             close(pPipe[0]);
             close(pPipe[1]); 
@@ -396,39 +437,13 @@ bool run_commands(list<Process *> &command_list)
           close(nPipe[0]);
           close(nPipe[1]); 
       }
-      
-      /* if (p->pipe_in == 1 && has_prevPipe) {
-          dup2(pPipe[0], STDIN_FILENO); 
-        }
-        if (needs_pipeOut) {
-            dup2(nPipe[1], STDOUT_FILENO); 
-        }
-
-        close(pPipe[0]); close(pPipe[1]); 
-        close(nPipe[0]); close(nPipe[1]);   
-
-        if (p->pipe_in == 1 & p->pipe_out == 1){
-            dup2(fd[0],0); //STDIN replaced by IN Pipe
-            dup2(fd[1],1); //STDOUT replaced by OUT Pipe
-        }
-            else if(p->pipe_in = 1){
-              printf("PIPE IN TRUE\n");
-              dup2(fd[0],0); //STDIN replaced by IN Pipe
-              close(fd[1]);
-            }
-
-            else if(p->pipe_out = 1){
-              printf("PIPE OUT TRUE\n");
-              dup2(fd[1],1); //STDOUT replaced by OUT Pipe
-              close(fd[0]); 
-            }*/ 
 
         // Debugging: Print the command and arguments
-        cout << "Executing command: " << command << "\n";
+        //cout << "Executing command: " << command << "\n";
         for (int i = 0; tempArg[i] != nullptr; ++i) {
-          cout << "Arg[" << i << "]: " << tempArg[i] << "\n";
+          //cout << "Arg[" << i << "]: " << tempArg[i] << "\n";
         }
-
+        fflush(stdout);
         execvp(command, tempArg); 
         perror("EXEC FAILED");
         exit(EXIT_FAILURE);
@@ -441,6 +456,7 @@ bool run_commands(list<Process *> &command_list)
       close(fd[0]);
     }
     */
+    else {
     pids.push_back(pid); 
 
     if(has_prevPipe){
@@ -456,16 +472,20 @@ bool run_commands(list<Process *> &command_list)
     else has_prevPipe = false; 
 
 
-  }
+    }
+}
+
+
 
 for (pid_t pid : pids){
   int status; 
   waitpid(pid, &status, 0);
+
   if (WIFEXITED(status)) {
-    printf("Process %d exited with status %d\n", pid, WEXITSTATUS(status));
+    //printf("Process %d exited with status %d\n", pid, WEXITSTATUS(status));
   } 
   else {
-    printf("Process %d terminated abnormally\n", pid);
+    fprintf(stderr, "Process %d terminated abnormally\n", pid);
   }
 }
   return is_quit;
@@ -515,3 +535,29 @@ void Process::add_token(char *tok) {
     std::cerr << "ERR:TOKEN LIST IS FULL" << endl;
   }
 }
+
+      /* if (p->pipe_in == 1 && has_prevPipe) {
+          dup2(pPipe[0], STDIN_FILENO); 
+        }
+        if (needs_pipeOut) {
+            dup2(nPipe[1], STDOUT_FILENO); 
+        }
+
+        close(pPipe[0]); close(pPipe[1]); 
+        close(nPipe[0]); close(nPipe[1]);   
+
+        if (p->pipe_in == 1 & p->pipe_out == 1){
+            dup2(fd[0],0); //STDIN replaced by IN Pipe
+            dup2(fd[1],1); //STDOUT replaced by OUT Pipe
+        }
+            else if(p->pipe_in = 1){
+              printf("PIPE IN TRUE\n");
+              dup2(fd[0],0); //STDIN replaced by IN Pipe
+              close(fd[1]);
+            }
+
+            else if(p->pipe_out = 1){
+              printf("PIPE OUT TRUE\n");
+              dup2(fd[1],1); //STDOUT replaced by OUT Pipe
+              close(fd[0]); 
+            }*/ 
