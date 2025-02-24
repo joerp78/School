@@ -97,7 +97,7 @@ TEST(ShellTest, TestSimpleRun) {
   restore_stdin_redirection(context, filename);
 
   EXPECT_TRUE(output == expected_output) << "Your Output\n"
-                                         << output << "\nexpected outputs:\n"
+                                       << output << "\nexpected outputs:\n"
                                          << expected_output;
 }
 

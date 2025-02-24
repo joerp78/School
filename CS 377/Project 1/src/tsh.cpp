@@ -76,15 +76,16 @@ void run() {
   bool is_quit = false;
   bool status; 
   
-  while(is_quit == false) {
+  do {
     display_prompt();
-    cout << "tsh> " ;
-    input_line = read_input();  
+    //cout << "tsh> " ;
+    input_line = read_input(); 
+    //cout << "RUN INPUT:" << input_line << endl; 
     parse_input(input_line, process_list);
     status = run_commands(process_list);  
-    //sleep(1);
     is_quit = status; 
-  } 
+    sleep(1);
+  } while(is_quit == false && input_line != NULL);
 
   cleanup(process_list, input_line);
 }
@@ -109,7 +110,8 @@ void run() {
  */
 char *read_input() {
 
-  size_t inputlen = 0;
+  size_t inputlen = 0; 
+  size_t templen = 0;
   char *input = NULL;
   char tempArr[MAX_LINE];
 
@@ -122,30 +124,31 @@ char *read_input() {
   clearerr(stdin);*/ 
 
   int count = 0; 
-  while (fgets(tempArr, MAX_LINE, stdin) != NULL){
+  do{
     size_t templen = strlen(tempArr); 
+    if (fgets(tempArr, MAX_LINE, stdin) == nullptr){
+      return input; 
+    }
     //cout << templen << endl;
     //for (size_t i = 0; i < templen; i++) {
       //printf("%c", tempArr[i]);
     //}
     //printf("\n"); 
 
-    if(tempArr[templen - 1] == '\n'){
-      tempArr[templen - 1] = '\0';
-      templen--;
-    }
+    //if(tempArr[templen - 1] == '\n'){
+      //break;
+    //}
 
     input = (char*) realloc(input, (inputlen + templen+ 1));
     if (input == NULL) {
       printf("MEM NOT ALLOCATED REALLOC\n");
-      free(input);
       return NULL;
     }
-    cout << *input << endl;
     strcpy(input + inputlen, tempArr);
     inputlen += templen; 
-    break; 
-  }
+    //cout << input << endl;
+    //break; 
+  } while (templen == MAX_LINE - 1 && tempArr[MAX_LINE - 2] != '\n');
 
   /*  
   for (size_t i = 0; i < inputlen; i++) {
@@ -186,7 +189,7 @@ char *read_input() {
  */
 void senetize(char* cmd) {
   if (cmd == nullptr){return;}
-
+  //cout << cmd << endl;
   for (char *c = cmd; *c != '\0'; ++c){
     //printf("%c\n", *c); 
     if (*c == '\n'){
@@ -225,14 +228,18 @@ void senetize(char* cmd) {
 void parse_input(char *cmd, list<Process *> &process_list) {
   int pipe_in_val = 0;
   Process *currProcess = nullptr;
+  //cout << cmd << endl;
+  senetize(cmd);
+  //cout << cmd << endl;
   
   //printf("HERE");
   if (cmd == nullptr){
     cerr << "Error : Receieved Null Command Input." << endl;
     return;
   }
+
   
-  senetize(cmd); 
+ 
   size_t cmdLen = strlen(cmd);; 
     
   char *tempWord = (char*) malloc((cmdLen + 1)  * sizeof(char));
@@ -511,6 +518,7 @@ for (pid_t pid : pids){
     fprintf(stderr, "Process %d terminated abnormally\n", pid);
   }
 }
+  command_list.clear(); 
   return is_quit;
 }
 
