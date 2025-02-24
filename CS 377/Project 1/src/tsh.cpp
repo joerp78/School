@@ -82,7 +82,7 @@ void run() {
     input_line = read_input();  
     parse_input(input_line, process_list);
     status = run_commands(process_list);  
-    sleep(1);
+    //sleep(1);
     is_quit = status; 
   } 
 
@@ -108,34 +108,57 @@ void run() {
  * free() to avoid memory leaks.
  */
 char *read_input() {
-  char *input = NULL;
-  size_t inputlen = 0;
-  fflush(stdin); 
 
-  input = (char*) malloc(MAX_LINE * sizeof(char));
+  size_t inputlen = 0;
+  char *input = NULL;
+  char tempArr[MAX_LINE];
+
+  /*input = (char*) malloc(MAX_LINE * sizeof(char));
   if (input == NULL){
     printf("MEM NOT ALLOCATED INITIALLY\n");
     return NULL; 
   }
+  
+  clearerr(stdin);*/ 
 
-  clearerr(stdin);
-  if (fgets(input, MAX_LINE, stdin) == NULL){
-    perror("fgets failed");
-    free(input);
-    return NULL;  
+  int count = 0; 
+  while (fgets(tempArr, MAX_LINE, stdin) != NULL){
+    size_t templen = strlen(tempArr); 
+    //cout << templen << endl;
+    //for (size_t i = 0; i < templen; i++) {
+      //printf("%c", tempArr[i]);
+    //}
+    //printf("\n"); 
+
+    if(tempArr[templen - 1] == '\n'){
+      tempArr[templen - 1] = '\0';
+      templen--;
+    }
+
+    input = (char*) realloc(input, (inputlen + templen+ 1));
+    if (input == NULL) {
+      printf("MEM NOT ALLOCATED REALLOC\n");
+      free(input);
+      return NULL;
+    }
+    cout << *input << endl;
+    strcpy(input + inputlen, tempArr);
+    inputlen += templen; 
+    break; 
   }
+
+  /*  
+  for (size_t i = 0; i < inputlen; i++) {
+    printf("%c", input[i]);
+  }
+  printf("\n"); 
+
+  
 
   if (input[0] == '\n') {
     free(input);
     return NULL;
 }
-  cout << input << endl;
-
-  inputlen = strlen(input); 
-  if (inputlen > 0 && input[inputlen - 1] == '\n'){
-    input[inputlen - 1] = '\0'; 
-    inputlen--;
-  }
 
   if (inputlen == 0) {
     free(input);
@@ -148,10 +171,10 @@ char *read_input() {
     free(input);
     return NULL; 
   }
-  input = temp; 
+  //input = temp; 
   
   //printf("%d\n",inputlen);
-  //printf("%s\n",input);
+  //printf("%s\n",input);*/
 
 
   return input;
@@ -203,7 +226,7 @@ void parse_input(char *cmd, list<Process *> &process_list) {
   int pipe_in_val = 0;
   Process *currProcess = nullptr;
   
-  
+  //printf("HERE");
   if (cmd == nullptr){
     cerr << "Error : Receieved Null Command Input." << endl;
     return;
