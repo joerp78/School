@@ -127,7 +127,6 @@ char *read_input() {
   int count = 0; 
   while (fgets(tempArr, MAX_LINE, stdin)) {
     size_t templen = strlen(tempArr);
-    // Reallocate input to hold the new block plus the existing data.
     char *new_input = (char*) realloc(input, inputlen + templen + 1);
     if (new_input == NULL) {
         printf("MEM NOT ALLOCATED REALLOC\n");
@@ -135,41 +134,13 @@ char *read_input() {
         return NULL;
     }
     input = new_input;
-    // Append the new block at the end of the current input.
     strcpy(input + inputlen, tempArr);
     inputlen += templen;
     
-    // If the newline character is found at the end of this block, we're done.
     if (templen > 0 && tempArr[templen - 1] == '\n') {
         break;
     }
 }
- /* do{
-    if (fgets(tempArr, MAX_LINE, stdin) == nullptr){
-      return input; 
-    }
-    size_t templen = strlen(tempArr);
-    //cout << templen << endl;
-    //for (size_t i = 0; i < templen; i++) {
-      //printf("%c", tempArr[i]);
-    //}
-    //printf("\n"); 
-
-    //if(tempArr[templen - 1] == '\n'){
-      //break;
-    //}
-
-    input = (char*) realloc(input, (inputlen + templen+ 1));
-    if (input == NULL) {
-      printf("MEM NOT ALLOCATED REALLOC\n");
-      return NULL;
-    }
-    strcpy(input + inputlen, tempArr);
-    inputlen += templen; 
-    //cout << input << endl;
-    //break; 
-  } while (templen == MAX_LINE - 1 && tempArr[MAX_LINE - 2] != '\n');
-   */ 
 
   return input;
 }
@@ -489,8 +460,10 @@ bool run_commands(list<Process *> &command_list)
     std::advance(it, p);
     Process* proc = *it;    
     
-    if(isQuit(proc))  is_quit = true; 
-
+    if(isQuit(proc)){  
+      is_quit = true; 
+      break; 
+    }
     if (!proc || !proc->cmdTokens[0]) {
       //cerr << "Invalid command at index " << p << endl;
       continue;
@@ -532,7 +505,9 @@ bool run_commands(list<Process *> &command_list)
 
 
     if (pid == 0){
-      if(isQuit(proc)) return is_quit = true; 
+      if(isQuit(proc)) {
+        exit(EXIT_SUCCESS); 
+      }
 
 
       if (proc->pipe_in == 1 && has_prevPipe){
@@ -589,6 +564,8 @@ for (pid_t pid : pids){
     fprintf(stderr, "Process %d terminated abnormally\n", pid);
   }
 }
+
+
   command_list.clear(); 
   return is_quit;
 }
