@@ -1,7 +1,7 @@
 #include <tsh.h>
 
 using namespace std;
-
+//VERSION 10 WORKING 63 SCORE
 /**
  * @brief
  * Helper function to print the PS1 pormpt.
@@ -76,7 +76,7 @@ void run() {
   bool is_quit = false;
   bool status; 
   
-  do {
+   do {
     display_prompt();
     //cout << "tsh> " ;
     input_line = read_input(); 
@@ -84,8 +84,9 @@ void run() {
     parse_input(input_line, process_list);
     status = run_commands(process_list);  
     is_quit = status; 
-    sleep(1);
-  } while(is_quit == false && input_line != NULL);
+    //sleep(1);
+
+  } while(is_quit == false && input_line != nullptr);
 
   cleanup(process_list, input_line);
 }
@@ -125,10 +126,10 @@ char *read_input() {
 
   int count = 0; 
   do{
-    size_t templen = strlen(tempArr); 
     if (fgets(tempArr, MAX_LINE, stdin) == nullptr){
       return input; 
     }
+    size_t templen = strlen(tempArr);
     //cout << templen << endl;
     //for (size_t i = 0; i < templen; i++) {
       //printf("%c", tempArr[i]);
@@ -199,6 +200,7 @@ void parse_input(char *cmd, list<Process *> &process_list) {
   int pipe_in_val = 0;
   Process *currProcess = nullptr;
   //cout << cmd << endl;
+  
   senetize(cmd);
   //cout << cmd << endl;
   
@@ -210,20 +212,21 @@ void parse_input(char *cmd, list<Process *> &process_list) {
 
   
  
-  size_t cmdLen = strlen(cmd);; 
-    
-  char *tempWord = (char*) malloc((cmdLen + 1)  * sizeof(char));
+  size_t cmdLen = strlen(cmd); 
+  //cout << cmd << endl; 
+  char* tempWord = (char*)malloc((cmdLen + 1)  * sizeof(char));
   int tempIndex = 0; 
 
 
-  //cout << cmdLen << endl; 
+  //cout << "CMD LEN:" << cmdLen << endl; 
 
   for (int i = 0; i<cmdLen; ++i)
   {
-    if (cmd[i] == ' '){
+    char ch = cmd[i];
+    if (ch == ' '){
       //cout << "found SPACE" << endl; 
-    if (tempIndex >0){
-      tempWord[tempIndex++] = '\0';
+    if (tempIndex > 0){
+      tempWord[tempIndex] = '\0';
         if (!currProcess){
           currProcess = new Process(pipe_in_val, 0);
           process_list.push_back(currProcess);
@@ -232,11 +235,33 @@ void parse_input(char *cmd, list<Process *> &process_list) {
         }
         //tempWord[tempIndex++] = '\0'; 
         currProcess->add_token(tempWord);
+        if (isQuit(currProcess)){
+          free(tempWord);
+          return; 
+        }
         tempIndex = 0;
         //cout << "found SPACE, adding Word" << endl; 
       }
     }
-    else if (cmd[i] == '|'){
+    
+    else if (ch == '|'){
+      if (tempIndex > 0){
+        //cout << "APPENDING" << endl;
+        tempWord[tempIndex] = '\0';
+        if (!currProcess){
+          currProcess = new Process(pipe_in_val, 0);
+          process_list.push_back(currProcess);         
+          }
+        
+
+        currProcess->add_token(tempWord);
+        if (isQuit(currProcess)){
+          free(tempWord);
+          return; 
+        }
+        tempIndex = 0;
+      }
+
       if (currProcess){
         currProcess->pipe_out = 1; 
       }
@@ -246,11 +271,30 @@ void parse_input(char *cmd, list<Process *> &process_list) {
       //cout << "found |, creating Process" << endl; 
 
       pipe_in_val = 1; 
-      currProcess = nullptr;
+      //currProcess = nullptr;
 
     }
-    else if (cmd[i] == ';')
+    else if (ch == ';')
     {
+      if (tempIndex > 0){
+        //cout << "APPENDING" << endl;
+        tempWord[tempIndex] = '\0';
+        if (!currProcess){
+          currProcess = new Process(pipe_in_val, 0);
+          process_list.push_back(currProcess);
+      }
+        currProcess->add_token(tempWord);
+        if (isQuit(currProcess)){
+          free(tempWord);
+          return; 
+        }
+        tempIndex = 0;
+      }
+      //else if (tempIndex > 0){
+        //cout << "APPENDING" << endl;
+        //tempWord[tempIndex] = '\0';
+      //} 
+ 
       //cout << "found ;" << endl; 
       
       currProcess = new Process(0, 0);
@@ -258,28 +302,73 @@ void parse_input(char *cmd, list<Process *> &process_list) {
       //cout << "found ;, creating Process" << endl; 
 
       pipe_in_val = 0; 
-      currProcess = nullptr;
+      //currProcess = nullptr;
     }
+    
+    /*
+    else if (cmd[i] == ';' || cmd[i] == '|') {
+    if (tempIndex > 0) {
+        tempWord[tempIndex] = '\0';  // Make sure string is properly null-terminated
+        if (!currProcess) {
+            currProcess = new Process(pipe_in_val, 0);
+            process_list.push_back(currProcess);
+        }
+        currProcess->add_token(tempWord);
+        if (isQuit(currProcess)){
+          free(tempWord);
+          return; 
+        }
+
+        
+        tempIndex = 0;
+    }
+    
+    // Create a new process when encountering a delimiter
+    currProcess = new Process((cmd[i] == '|') ? 1 : 0, 0);
+    process_list.push_back(currProcess);
+    pipe_in_val = (cmd[i] == '|') ? 1 : 0;
+    currProcess = nullptr;
+}
+    */ 
+
     else 
     {
-      tempWord[tempIndex++] = cmd[i]; 
+      tempWord[tempIndex++] = ch; 
     }
-
+    /*
+    else if (cmd[i] == ';' || cmd[i] == '|') {
+      if (tempIndex > 0) { // Store previous word before handling delimiter
+          tempWord[tempIndex] = '\0';
+          if (!currProcess) {
+              currProcess = new Process(pipe_in_val, 0);
+              process_list.push_back(currProcess);
+          }
+          currProcess->add_token(tempWord);
+          tempIndex = 0;
+      }
+      
+      // Create a new process when encountering a delimiter
+      currProcess = new Process((cmd[i] == '|') ? 1 : 0, 0);
+      process_list.push_back(currProcess);
+  
+      pipe_in_val = (cmd[i] == '|') ? 1 : 0;
+      currProcess = nullptr;
+  }*/
   }
   if (tempIndex > 0){
-    //tempWord[tempIndex++] = '\0';
+    tempWord[tempIndex] = '\0';
     if (!currProcess){
       currProcess = new Process(pipe_in_val, 0);
       process_list.push_back(currProcess);
       //cout << "creating Process" << endl; 
-
     }
-  
-    //cout << tempWord << endl;
-    int wordLen = strlen(tempWord);
-    tempWord[tempIndex++] = '\0'; 
     currProcess->add_token(tempWord);
-    //cout << "adding Word" << endl; 
+    if (isQuit(currProcess)){
+      free(tempWord);
+      return; 
+    }
+    tempIndex = 0;
+    
   }
 
   free(tempWord);
@@ -380,12 +469,12 @@ bool run_commands(list<Process *> &command_list)
     std::advance(it, p);
     Process* proc = *it;    
     
-    if(isQuit(proc)) return (is_quit = true); 
+    if(isQuit(proc))  is_quit = true; 
 
     if (!proc || !proc->cmdTokens[0]) {
       //cerr << "Invalid command at index " << p << endl;
       continue;
-  }
+    }
     //cout << command << endl; 
     
     char *command = proc->cmdTokens[0];
@@ -423,6 +512,9 @@ bool run_commands(list<Process *> &command_list)
 
 
     if (pid == 0){
+      if(isQuit(proc)) return is_quit = true; 
+
+
       if (proc->pipe_in == 1 && has_prevPipe){
             dup2(pPipe[0], STDIN_FILENO); 
             close(pPipe[0]);
@@ -445,6 +537,8 @@ bool run_commands(list<Process *> &command_list)
         exit(EXIT_FAILURE);
     }
 
+    
+
     else {
     pids.push_back(pid); 
 
@@ -463,8 +557,6 @@ bool run_commands(list<Process *> &command_list)
 
     }
 }
-
-
 
 for (pid_t pid : pids){
   int status; 
@@ -505,7 +597,9 @@ Process::Process(int _pipe_in, int _pipe_out) {
 Process::~Process() {
   for (int j = 0; j < 25; j++){
     if (cmdTokens[j] != nullptr){
-      delete[] cmdTokens[j];
+      //delete[] cmdTokens[j];
+      free(cmdTokens[j]);
+      cmdTokens[j] = nullptr;
     }
   }
 }
@@ -517,8 +611,9 @@ Process::~Process() {
  */
 void Process::add_token(char *tok) {
   if (i < 25){
-    cmdTokens[i] = new char [strlen(tok) + 1];
-    strcpy(cmdTokens[i], tok); 
+    //cmdTokens[i] = new char [strlen(tok) + 1];
+    //strcpy(cmdTokens[i], tok); 
+    cmdTokens[i] = strdup(tok);
     i++;
   }
   else {
