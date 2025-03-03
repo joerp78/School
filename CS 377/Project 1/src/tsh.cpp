@@ -116,13 +116,6 @@ char *read_input() {
   char *input = NULL;
   char tempArr[MAX_LINE];
 
-  /*input = (char*) malloc(MAX_LINE * sizeof(char));
-  if (input == NULL){
-    printf("MEM NOT ALLOCATED INITIALLY\n");
-    return NULL; 
-  }
-  
-  clearerr(stdin);*/ 
 
   int count = 0; 
   while (fgets(tempArr, MAX_LINE, stdin)) {
@@ -281,70 +274,29 @@ void parse_input(char *cmd, list<Process *> &process_list) {
         }
         tempIndex = 0;
       }
-      //else if (tempIndex > 0){
-        //cout << "APPENDING" << endl;
-        //tempWord[tempIndex] = '\0';
-      //} 
+
  
       //cout << "found ;" << endl; 
-      
-      currProcess = new Process(0, 0);
-      process_list.push_back(currProcess);
+      //Process* boundary = new Process(0, 0);
+      //process_list.push_back(boundary);
+      //currProcess = new Process(0, 0);
+      //process_list.push_back(currProcess);
       //cout << "found ;, creating Process" << endl; 
+      if (currProcess){
+        currProcess->add_token(";"); 
+      }
 
+      currProcess = nullptr;
       pipe_in_val = 0; 
-      //currProcess = nullptr;
+      
     }
-    
-    /*
-    else if (cmd[i] == ';' || cmd[i] == '|') {
-    if (tempIndex > 0) {
-        tempWord[tempIndex] = '\0';  // Make sure string is properly null-terminated
-        if (!currProcess) {
-            currProcess = new Process(pipe_in_val, 0);
-            process_list.push_back(currProcess);
-        }
-        currProcess->add_token(tempWord);
-        if (isQuit(currProcess)){
-          free(tempWord);
-          return; 
-        }
 
-        
-        tempIndex = 0;
-    }
-    
-    // Create a new process when encountering a delimiter
-    currProcess = new Process((cmd[i] == '|') ? 1 : 0, 0);
-    process_list.push_back(currProcess);
-    pipe_in_val = (cmd[i] == '|') ? 1 : 0;
-    currProcess = nullptr;
-}
-    */ 
 
     else 
     {
       tempWord[tempIndex++] = ch; 
     }
-    /*
-    else if (cmd[i] == ';' || cmd[i] == '|') {
-      if (tempIndex > 0) { // Store previous word before handling delimiter
-          tempWord[tempIndex] = '\0';
-          if (!currProcess) {
-              currProcess = new Process(pipe_in_val, 0);
-              process_list.push_back(currProcess);
-          }
-          currProcess->add_token(tempWord);
-          tempIndex = 0;
-      }
-      
-      // Create a new process when encountering a delimiter
-      currProcess = new Process((cmd[i] == '|') ? 1 : 0, 0);
-      process_list.push_back(currProcess);
-  
-      pipe_in_val = (cmd[i] == '|') ? 1 : 0;
-      currProcess = nullptr;
-  }*/
+
   }
   if (tempIndex > 0){
     tempWord[tempIndex] = '\0';
@@ -440,7 +392,6 @@ bool isQuit(Process *p) {
  * - Students should understand the basics of forking, pipes, and process
  * execution in Unix-like systems.
  */
-
 bool run_commands(list<Process *> &command_list) 
 {
   bool is_quit = false;
@@ -460,15 +411,26 @@ bool run_commands(list<Process *> &command_list)
     std::advance(it, p);
     Process* proc = *it;    
     
+    if (!proc || !proc->cmdTokens[0])
+      continue;
+    
+    bool flush_after = false;
+    int token_count = 0;
+    while(proc->cmdTokens[token_count] != nullptr)
+    {
+      token_count++;
+    } if(token_count > 0 && strcmp(proc->cmdTokens[token_count - 1], ";") == 0)
+    {
+      proc->cmdTokens[token_count - 1] = nullptr;
+      flush_after = true;
+    }
+
+
     if(isQuit(proc)){  
       is_quit = true; 
       break; 
     }
-    if (!proc || !proc->cmdTokens[0]) {
-      //cerr << "Invalid command at index " << p << endl;
-      continue;
-    }
-    //cout << command << endl; 
+
     
     char *command = proc->cmdTokens[0];
     char *tempArg[25] = {};
@@ -548,10 +510,19 @@ bool run_commands(list<Process *> &command_list)
       has_prevPipe = true;
     }
     else has_prevPipe = false; 
-
-
     }
-}
+
+    if (flush_after) {
+      for (pid_t p : pids) {
+        int status; 
+        waitpid(p, &status, 0);
+      }
+      pids.clear();
+      has_prevPipe = false;
+    }
+  }
+
+
 
 for (pid_t pid : pids){
   int status; 
