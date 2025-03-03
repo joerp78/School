@@ -1,7 +1,8 @@
 #include <tsh.h>
 
 using namespace std;
-//VERSION 10 WORKING 63 SCORE
+//VERSION 22 WORKING 92.6 SCORE; PASSES ALL TEST CASES
+//JOE PAOLA, 3/3/25, CS 377
 /**
  * @brief
  * Helper function to print the PS1 pormpt.
@@ -78,15 +79,12 @@ void run() {
   
    do {
     display_prompt();
-    //cout << "tsh> " ;
     input_line = read_input(); 
-    //cout << "RUN INPUT:" << input_line << endl; 
     parse_input(input_line, process_list);
     status = run_commands(process_list);  
     is_quit = status; 
-    //sleep(1);
 
-  } while(is_quit == false && input_line != nullptr);
+  } while(is_quit == false && input_line != nullptr); //ensures that the loop runs until the user quits and maintains valid input
 
   cleanup(process_list, input_line);
 }
@@ -111,13 +109,14 @@ void run() {
  */
 char *read_input() {
 
-  size_t inputlen = 0; 
-  size_t templen = 0;
-  char *input = NULL;
-  char tempArr[MAX_LINE];
+  size_t inputlen = 0; //size of the input
+  size_t templen = 0; //size of temp buffer
+  char *input = NULL; //input buffer
+  char tempArr[MAX_LINE]; //temp buffer
 
 
   int count = 0; 
+  //loops through input collecing it 81 characters at a time until a newline is encountered
   while (fgets(tempArr, MAX_LINE, stdin)) {
     size_t templen = strlen(tempArr);
     char *new_input = (char*) realloc(input, inputlen + templen + 1);
@@ -127,9 +126,10 @@ char *read_input() {
         return NULL;
     }
     input = new_input;
-    strcpy(input + inputlen, tempArr);
+    strcpy(input + inputlen, tempArr); //append next batch of input to the buffer 
     inputlen += templen;
     
+    //breaks if newLine is encountered and EOF 
     if (templen > 0 && tempArr[templen - 1] == '\n') {
         break;
     }
@@ -144,9 +144,9 @@ char *read_input() {
  */
 void senetize(char* cmd) {
   if (cmd == nullptr){return;}
-  //cout << cmd << endl;
+
+  //iterates through cmd and replaces new line char with null char
   for (char *c = cmd; *c != '\0'; ++c){
-    //printf("%c\n", *c); 
     if (*c == '\n'){
         *c = '\0'; 
     }
@@ -183,127 +183,118 @@ void senetize(char* cmd) {
 void parse_input(char *cmd, list<Process *> &process_list) {
   int pipe_in_val = 0;
   Process *currProcess = nullptr;
-  //cout << cmd << endl;
   
-  senetize(cmd);
-  //cout << cmd << endl;
+  senetize(cmd); //remove NL characters
   
-  //printf("HERE");
   if (cmd == nullptr){
     cerr << "Error : Receieved Null Command Input." << endl;
     return;
   }
 
-  
- 
   size_t cmdLen = strlen(cmd); 
-  //cout << cmd << endl; 
-  char* tempWord = (char*)malloc((cmdLen + 1)  * sizeof(char));
+  char* tempWord = (char*)malloc((cmdLen + 1)  * sizeof(char)); //allocate memory for tempWord based on cmd length
   int tempIndex = 0; 
 
 
-  //cout << "CMD LEN:" << cmdLen << endl; 
 
   for (int i = 0; i<cmdLen; ++i)
   {
-    char ch = cmd[i];
+    char ch = cmd[i]; //current character in command
+
+    //Handles spaces in CMD
     if (ch == ' '){
-      //cout << "found SPACE" << endl; 
+    //Add null terminator to tempWord to distinguish between words
     if (tempIndex > 0){
       tempWord[tempIndex] = '\0';
+        //ensures process exists for assignment 
         if (!currProcess){
           currProcess = new Process(pipe_in_val, 0);
           process_list.push_back(currProcess);
-          //cout << "found SPACE, creating Process" << endl; 
 
         }
-        //tempWord[tempIndex++] = '\0'; 
         currProcess->add_token(tempWord);
+
+        //terminates parsing if user quit command encountered
         if (isQuit(currProcess)){
           free(tempWord);
           return; 
         }
-        tempIndex = 0;
-        //cout << "found SPACE, adding Word" << endl; 
+        tempIndex = 0; //reset tempWord index for next word 
       }
     }
     
+    //Handles pipes in CMD
     else if (ch == '|'){
+      //add null terminator to tempWord to distinguish between words
       if (tempIndex > 0){
-        //cout << "APPENDING" << endl;
         tempWord[tempIndex] = '\0';
+        //ensures process exists for assignment
         if (!currProcess){
           currProcess = new Process(pipe_in_val, 0);
           process_list.push_back(currProcess);         
           }
-        
+        currProcess->add_token(tempWord); //push word to process
 
-        currProcess->add_token(tempWord);
+        //terminates parsing if user quit command encountered
         if (isQuit(currProcess)){
           free(tempWord);
           return; 
         }
-        tempIndex = 0;
+        tempIndex = 0; 
       }
 
+      //sets pipe_out flag for current process 
       if (currProcess){
-        currProcess->pipe_out = 1; 
+        currProcess->pipe_out = 1;  
       }
-      //cout << "found |" << endl; 
-      currProcess = new Process(1, 0);
-      process_list.push_back(currProcess);
-      //cout << "found |, creating Process" << endl; 
+      currProcess = new Process(1, 0); //create a new process that will need to recieve a pipe_in_val
+      process_list.push_back(currProcess); //add process to list 
 
       pipe_in_val = 1; 
-      //currProcess = nullptr;
-
     }
+
+    //Handles semicolons in CMD
     else if (ch == ';')
     {
+      //add null terminator to tempWord to distinguish between words
       if (tempIndex > 0){
-        //cout << "APPENDING" << endl;
         tempWord[tempIndex] = '\0';
+        //ensures process exists for assignment
         if (!currProcess){
           currProcess = new Process(pipe_in_val, 0);
           process_list.push_back(currProcess);
       }
-        currProcess->add_token(tempWord);
+        currProcess->add_token(tempWord); //add token to process
+        //terminates parsing if user quit command encountered
         if (isQuit(currProcess)){
           free(tempWord);
           return; 
         }
-        tempIndex = 0;
+        tempIndex = 0; //reset tempWord index for next word
       }
 
- 
-      //cout << "found ;" << endl; 
-      //Process* boundary = new Process(0, 0);
-      //process_list.push_back(boundary);
-      //currProcess = new Process(0, 0);
-      //process_list.push_back(currProcess);
-      //cout << "found ;, creating Process" << endl; 
+      //adds semicolon to token to signal end of batch command
       if (currProcess){
-        currProcess->add_token(";"); 
+        currProcess->add_token(";");
       }
 
-      currProcess = nullptr;
+      currProcess = nullptr; //set current process to null so that a new process is created
       pipe_in_val = 0; 
       
     }
-
-
+    //when a delimiter is not encountered, add the character to tempWord so it can create a complete command
     else 
     {
       tempWord[tempIndex++] = ch; 
     }
 
   }
+  //cleanup for unprocessed commands left at end of input, generate new process for them
   if (tempIndex > 0){
     tempWord[tempIndex] = '\0';
     if (!currProcess){
       currProcess = new Process(pipe_in_val, 0);
       process_list.push_back(currProcess);
-      //cout << "creating Process" << endl; 
     }
     currProcess->add_token(tempWord);
     if (isQuit(currProcess)){
@@ -314,7 +305,7 @@ void parse_input(char *cmd, list<Process *> &process_list) {
     
   }
 
-  free(tempWord);
+  free(tempWord); //free memory allocated for tempWord
 
 }
 
@@ -333,11 +324,11 @@ void parse_input(char *cmd, list<Process *> &process_list) {
  *   - false otherwise.
  */
 bool isQuit(Process *p) {
+  //scans through token list to see if any tokens are "quit", returns boolean value depending on success
   for (int j = 0; j < 25; ++j){
     if (p->cmdTokens[j] != nullptr){
       //cout << "Token: " << p->cmdTokens[j] << endl;
       if (strcmp(p->cmdTokens[j], "quit") == 0) {
-        //cout << endl; 
         return true;
       }
     }
@@ -394,28 +385,27 @@ bool isQuit(Process *p) {
  */
 bool run_commands(list<Process *> &command_list) 
 {
-  bool is_quit = false;
+  bool is_quit = false; //flag for quit command
   int size = command_list.size();
-  //pid_t pids[size];
-  vector<pid_t> pids;
+  vector<pid_t> pids; //list of pids for child processes
   Process *prev = nullptr;
 
-  int pPipe[2], nPipe[2];
-  bool has_prevPipe = false;  
+  int pPipe[2], nPipe[2]; //pipe descriptors for previous and next processes
+  bool has_prevPipe = false;  //boolean to determine if there is a previous pipe
 
   //for (Process *p : command_list)
   for (int p = 0; p < size; p++)
   {
-    //cout << p->cmdTokens[1] << endl; 
+    //cout << p->cmdTokens[1] << endl;
+    //iterator  
     std::list<Process*>::iterator it = command_list.begin();
     std::advance(it, p);
     Process* proc = *it;    
     
-    if (!proc || !proc->cmdTokens[0])
-      continue;
-    
+
     bool flush_after = false;
     int token_count = 0;
+    //iterates through command tokens and strips out semicolons to prevent exec errors
     while(proc->cmdTokens[token_count] != nullptr)
     {
       token_count++;
@@ -425,26 +415,27 @@ bool run_commands(list<Process *> &command_list)
       flush_after = true;
     }
 
-
+    //checks if quit command is encountered, setting flag to true
     if(isQuit(proc)){  
       is_quit = true; 
       break; 
     }
 
     
-    char *command = proc->cmdTokens[0];
-    char *tempArg[25] = {};
+    char *command = proc->cmdTokens[0]; //command is always the first token
+    char *tempArg[25] = {}; //temp array to store command arguments
     int tempIndex = 0; 
 
+    //loop to assign argument char pointers to tempArg
     for (char **c = proc->cmdTokens; *c != nullptr; ++c)
     {
       tempArg[tempIndex++] = *c;  
-      //cout << *c << endl;     
     }
     tempArg[tempIndex] = nullptr; 
 
 
-    bool needs_pipeOut = (proc->pipe_out == 1);  
+    bool needs_pipeOut = (proc->pipe_out == 1);  //sets pipeout flag based on process attribute 
+    //start pipe creation if needed 
     if (needs_pipeOut){
       if(pipe(nPipe) < 0)
           {
@@ -454,56 +445,58 @@ bool run_commands(list<Process *> &command_list)
         //else printf("PIPE CREATED\n");
       }
 
+    //fork child processes to execute commands
     pid_t pid = fork();
+    //if returns negative value fork failed
     if (pid == -1){
       perror("FORK FAILED");
       return false;
     }
 
-
-        for (int i = 0; tempArg[i] != nullptr; ++i) {
-          //cout << "Arg[" << i << "]: " << tempArg[i] << "\n";
-        }    
-
-
+    //child process
     if (pid == 0){
+      //checks if quit command is encountered, exits from child without executing command
       if(isQuit(proc)) {
         exit(EXIT_SUCCESS); 
       }
 
-
+      //if there is a previous pipe, set up input pipe
       if (proc->pipe_in == 1 && has_prevPipe){
             dup2(pPipe[0], STDIN_FILENO); 
             close(pPipe[0]);
             close(pPipe[1]); 
         }
-    
+        //if there is a next pipe, set up output pipe
         if (needs_pipeOut){
           dup2(nPipe[1], STDOUT_FILENO); 
           close(nPipe[0]);
           close(nPipe[1]); 
       }
-
+        //DEBUGGING CODE
         //cout << "Executing command: " << command << "\n";
-        for (int i = 0; tempArg[i] != nullptr; ++i) {
+        //for (int i = 0; tempArg[i] != nullptr; ++i) {
           //cout << "Arg[" << i << "]: " << tempArg[i] << "\n";
-        }
+        //}
+
+        //executes command with arguments, error handling if exec fails
         fflush(stdout);
         execvp(command, tempArg); 
         perror("EXEC FAILED");
         exit(EXIT_FAILURE);
     }
 
-    
-
+    //parent process
     else {
+    //adds process id to stack for future waiting
     pids.push_back(pid); 
-
+    
+    //closes pipes if they are not needed
     if(has_prevPipe){
       close(pPipe[0]);
       close(pPipe[1]);
     }
 
+    //sets up previous pipe for next process & boolean logic
     if (needs_pipeOut){
       pPipe[0] = nPipe[0];
       pPipe[1] = nPipe[1];
@@ -511,7 +504,7 @@ bool run_commands(list<Process *> &command_list)
     }
     else has_prevPipe = false; 
     }
-
+    //waits for child processes to finish if flush_after flag is set indicating a ; and batch processing required
     if (flush_after) {
       for (pid_t p : pids) {
         int status; 
@@ -523,7 +516,7 @@ bool run_commands(list<Process *> &command_list)
   }
 
 
-
+//waits for all child processes to finish before returning
 for (pid_t pid : pids){
   int status; 
   waitpid(pid, &status, 0);
@@ -551,6 +544,7 @@ for (pid_t pid : pids){
  * @param _pipe_out The output pipe descriptor.
  */
 Process::Process(int _pipe_in, int _pipe_out) {
+  //sets pipe_in and pipe_out attributes to input values, fills cmdTokens with null pointers
   pipe_in = _pipe_in;
   pipe_out = _pipe_out;
   i = 0;
@@ -563,9 +557,9 @@ Process::Process(int _pipe_in, int _pipe_out) {
  * @brief Destructor for Process class.
  */
 Process::~Process() {
+  //frees all tokens in cmdTokens and sets them to null
   for (int j = 0; j < 25; j++){
     if (cmdTokens[j] != nullptr){
-      //delete[] cmdTokens[j];
       free(cmdTokens[j]);
       cmdTokens[j] = nullptr;
     }
@@ -579,8 +573,7 @@ Process::~Process() {
  */
 void Process::add_token(char *tok) {
   if (i < 25){
-    //cmdTokens[i] = new char [strlen(tok) + 1];
-    //strcpy(cmdTokens[i], tok); 
+    //tokens are copied from input to cmdTokens in object
     cmdTokens[i] = strdup(tok);
     i++;
   }
