@@ -75,17 +75,17 @@ list<Process> fifo(pqueue_arrival workload) {
   int time = 0; 
 
 while (!work.empty()){
-  Process p = work.top();
-  if(p.arrival < time){
-    
-  }
+  if (work.top().arrival <= time)
+  {
+    Process p = work.top();
+    p.first_run = time;
+    time += p.duration; 
+    p.completion = time;
+  
+    work.pop();
+    complete.push_back(p);  }
   else {
-  p.first_run = time;
-  time += p.duration; 
-  p.completion = time;
-
-  work.pop();
-  complete.push_back(p);
+    time = work.top().arrival; 
   }
 }
 
