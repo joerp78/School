@@ -1,0 +1,76 @@
+IP Upgrade report for Lab2
+Fri Mar 07 15:39:37 2025
+Quartus Prime Version 18.1.0 Build 625 09/12/2018 SJ Lite Edition
+
+
+---------------------
+; Table of Contents ;
+---------------------
+  1. Legal Notice
+  2. IP Upgrade Summary
+  3. Successfully Upgraded IP Components
+  4. IP Upgrade Messages
+
+
+
+----------------
+; Legal Notice ;
+----------------
+Copyright (C) 2018  Intel Corporation. All rights reserved.
+Your use of Intel Corporation's design tools, logic functions 
+and other software and tools, and its AMPP partner logic 
+functions, and any output files from any of the foregoing 
+(including device programming or simulation files), and any 
+associated documentation or information are expressly subject 
+to the terms and conditions of the Intel Program License 
+Subscription Agreement, the Intel Quartus Prime License Agreement,
+the Intel FPGA IP License Agreement, or other applicable license
+agreement, including, without limitation, that your use is for
+the sole purpose of programming logic devices manufactured by
+Intel and sold by Intel or its authorized distributors.  Please
+refer to the applicable agreement for further details.
+
+
+
++----------------------------------------------------------------------------+
+; IP Upgrade Summary                                                         ;
++------------------------------+---------------------------------------------+
+; IP Components Upgrade Status ; Passed - Fri Mar 07 15:39:37 2025           ;
+; Quartus Prime Version        ; 18.1.0 Build 625 09/12/2018 SJ Lite Edition ;
+; Revision Name                ; Lab2                                        ;
+; Top-level Entity Name        ; DE1_SoC_With_D5M                            ;
+; Family                       ; Cyclone V                                   ;
++------------------------------+---------------------------------------------+
+
+
++-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+; Successfully Upgraded IP Components                                                                                                                                                                               ;
++--------------------+----------------+---------+-------------------------------------------------------------------+-------------------------------------------------------------------+-----------------+---------+
+; Entity Name        ; Component Name ; Version ; Original Source File                                              ; Generation File Path                                              ; New Source File ; Message ;
++--------------------+----------------+---------+-------------------------------------------------------------------+-------------------------------------------------------------------+-----------------+---------+
+; Video_In_Subsystem ; Qsys           ; N/A     ; Lab2_ECE332_2021/Lab2_ECE332_2021/verilog/Video_In_Subsystem.qsys ; Lab2_ECE332_2021/Lab2_ECE332_2021/verilog/Video_In_Subsystem.qsys ;                 ;         ;
+; Computer_System    ; Qsys           ; N/A     ; Lab2_ECE332_2021/Lab2_ECE332_2021/verilog/Computer_System.qsys    ; Lab2_ECE332_2021/Lab2_ECE332_2021/verilog/Computer_System.qsys    ;                 ;         ;
++--------------------+----------------+---------+-------------------------------------------------------------------+-------------------------------------------------------------------+-----------------+---------+
+
+
++---------------------+
+; IP Upgrade Messages ;
++---------------------+
+Info (11902): Backing up file "Lab2_ECE332_2021/Lab2_ECE332_2021/verilog/Video_In_Subsystem.qsys" to "Lab2_ECE332_2021/Lab2_ECE332_2021/verilog/Video_In_Subsystem.BAK.qsys"
+Info (11837): Started upgrading IP component Qsys with file "Lab2_ECE332_2021/Lab2_ECE332_2021/verilog/Video_In_Subsystem.qsys"
+Info: 2025.03.07.15:39:05 Info: Starting to upgrade the IP cores in the Platform Designer system
+Info: 2025.03.07.15:39:05 Info: Finished upgrading the ip cores
+Info (11902): Backing up file "Lab2_ECE332_2021/Lab2_ECE332_2021/verilog/Computer_System.qsys" to "Lab2_ECE332_2021/Lab2_ECE332_2021/verilog/Computer_System.BAK.qsys"
+Info (11837): Started upgrading IP component Qsys with file "Lab2_ECE332_2021/Lab2_ECE332_2021/verilog/Computer_System.qsys"
+Info: 2025.03.07.15:39:37 Info: Starting to upgrade the IP cores in the Platform Designer system
+Info: 2025.03.07.15:39:37 Info: Finished upgrading the ip cores
+Info (11131): Completed upgrading IP component Qsys with file "Lab2_ECE332_2021/Lab2_ECE332_2021/verilog/Video_In_Subsystem.qsys"
+Info (11131): Completed upgrading IP component Qsys with file "Lab2_ECE332_2021/Lab2_ECE332_2021/verilog/Computer_System.qsys"
+Info (23030): Evaluation of Tcl script c:/intelfpga_lite/18.1/quartus/common/tcl/internal/ip_regen/ip_regen.tcl was successful
+Info: Quartus Prime Shell was successful. 0 errors, 0 warnings
+    Info: Peak virtual memory: 4892 megabytes
+    Info: Processing ended: Fri Mar 07 15:39:37 2025
+    Info: Elapsed time: 00:00:49
+    Info: Total CPU time (on all processors): 00:01:28
+
+

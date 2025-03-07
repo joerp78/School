@@ -1,0 +1,102 @@
+Info: Starting: Create block symbol file (.bsf)
+Info: qsys-generate C:\intelFPGA_lite\18.1\332-lab-2\Lab2_ECE332_2021\verilog\D5M_Subsystem.qsys --block-symbol-file --output-directory=C:\intelFPGA_lite\18.1\332-lab-2\Lab2_ECE332_2021\verilog\D5M_Subsystem --family="Cyclone V" --part=5CSEMA5F31C6
+Progress: Loading verilog/D5M_Subsystem.qsys
+Progress: Reading input file
+Progress: Adding Bayer_Resampler [altera_up_avalon_video_bayer_resampler 18.0]
+Progress: Parameterizing module Bayer_Resampler
+Progress: Adding D5M_Config [altera_up_avalon_audio_and_video_config 18.0]
+Progress: Parameterizing module D5M_Config
+Progress: Adding Sys_Clk [clock_source 18.1]
+Progress: Parameterizing module Sys_Clk
+Progress: Adding Video_In [altera_up_avalon_video_decoder 18.0]
+Progress: Parameterizing module Video_In
+Progress: Adding Video_In_Clipper [altera_up_avalon_video_clipper 18.0]
+Progress: Parameterizing module Video_In_Clipper
+Progress: Adding Video_In_DMA [altera_up_avalon_video_dma_controller 18.0]
+Progress: Parameterizing module Video_In_DMA
+Progress: Adding Video_In_RGB_Resampler [altera_up_avalon_video_rgb_resampler 18.0]
+Progress: Parameterizing module Video_In_RGB_Resampler
+Progress: Adding Video_In_Scaler [altera_up_avalon_video_scaler 18.0]
+Progress: Parameterizing module Video_In_Scaler
+Progress: Building connections
+Progress: Parameterizing connections
+Progress: Validating
+Progress: Done reading input file
+Info: D5M_Subsystem.Bayer_Resampler: Change in Resolution: 2592 x 1944 -> 1296 x 972
+Info: D5M_Subsystem.Video_In: Video In Stream: Format: 2592 x 1944 (default) with Colour: 8 (bits) x 1 (planes) (RGB Bayer Pattern)
+Info: D5M_Subsystem.Video_In_Clipper: Change in Resolution: 1296 x 972 -> 1280 x 960
+Info: D5M_Subsystem.Video_In_RGB_Resampler: RGB Resampling: 8 (bits) x 3 (planes) -> 16 (bits) x 1 (planes)
+Info: D5M_Subsystem.Video_In_Scaler: Change in Resolution: 1280 x 960 -> 320 x 240
+Warning: D5M_Subsystem.Video_In_RGB_Resampler: Video_In_RGB_Resampler.avalon_rgb_slave must be connected to an Avalon-MM master
+Info: qsys-generate succeeded.
+Info: Finished: Create block symbol file (.bsf)
+Info: 
+Info: Starting: Create HDL design files for synthesis
+Info: qsys-generate C:\intelFPGA_lite\18.1\332-lab-2\Lab2_ECE332_2021\verilog\D5M_Subsystem.qsys --synthesis=VERILOG --output-directory=C:\intelFPGA_lite\18.1\332-lab-2\Lab2_ECE332_2021\verilog\D5M_Subsystem\synthesis --family="Cyclone V" --part=5CSEMA5F31C6
+Progress: Loading verilog/D5M_Subsystem.qsys
+Progress: Reading input file
+Progress: Adding Bayer_Resampler [altera_up_avalon_video_bayer_resampler 18.0]
+Progress: Parameterizing module Bayer_Resampler
+Progress: Adding D5M_Config [altera_up_avalon_audio_and_video_config 18.0]
+Progress: Parameterizing module D5M_Config
+Progress: Adding Sys_Clk [clock_source 18.1]
+Progress: Parameterizing module Sys_Clk
+Progress: Adding Video_In [altera_up_avalon_video_decoder 18.0]
+Progress: Parameterizing module Video_In
+Progress: Adding Video_In_Clipper [altera_up_avalon_video_clipper 18.0]
+Progress: Parameterizing module Video_In_Clipper
+Progress: Adding Video_In_DMA [altera_up_avalon_video_dma_controller 18.0]
+Progress: Parameterizing module Video_In_DMA
+Progress: Adding Video_In_RGB_Resampler [altera_up_avalon_video_rgb_resampler 18.0]
+Progress: Parameterizing module Video_In_RGB_Resampler
+Progress: Adding Video_In_Scaler [altera_up_avalon_video_scaler 18.0]
+Progress: Parameterizing module Video_In_Scaler
+Progress: Building connections
+Progress: Parameterizing connections
+Progress: Validating
+Progress: Done reading input file
+Info: D5M_Subsystem.Bayer_Resampler: Change in Resolution: 2592 x 1944 -> 1296 x 972
+Info: D5M_Subsystem.Video_In: Video In Stream: Format: 2592 x 1944 (default) with Colour: 8 (bits) x 1 (planes) (RGB Bayer Pattern)
+Info: D5M_Subsystem.Video_In_Clipper: Change in Resolution: 1296 x 972 -> 1280 x 960
+Info: D5M_Subsystem.Video_In_RGB_Resampler: RGB Resampling: 8 (bits) x 3 (planes) -> 16 (bits) x 1 (planes)
+Info: D5M_Subsystem.Video_In_Scaler: Change in Resolution: 1280 x 960 -> 320 x 240
+Warning: D5M_Subsystem.Video_In_RGB_Resampler: Video_In_RGB_Resampler.avalon_rgb_slave must be connected to an Avalon-MM master
+Info: D5M_Subsystem: Generating D5M_Subsystem "D5M_Subsystem" for QUARTUS_SYNTH
+Info: Interconnect is inserted between master Video_In_DMA.avalon_dma_master and slave Video_In_DMA.avalon_dma_control_slave because the master has address signal 32 bit wide, but the slave is 2 bit wide.
+Info: Interconnect is inserted between master Video_In_DMA.avalon_dma_master and slave Video_In_DMA.avalon_dma_control_slave because the master has waitrequest signal 1 bit wide, but the slave is 0 bit wide.
+Info: Interconnect is inserted between master Video_In_DMA.avalon_dma_master and slave Video_In_DMA.avalon_dma_control_slave because the master has writedata signal 16 bit wide, but the slave is 32 bit wide.
+Info: Bayer_Resampler: Starting Generation of Video Bayer Pattern Resampler
+Info: Bayer_Resampler: "D5M_Subsystem" instantiated altera_up_avalon_video_bayer_resampler "Bayer_Resampler"
+Info: D5M_Config: Starting Generation of Audio and Video Config
+Info: D5M_Config: "D5M_Subsystem" instantiated altera_up_avalon_audio_and_video_config "D5M_Config"
+Info: Video_In: Starting Generation of Video In Decoder
+Info: Video_In: "D5M_Subsystem" instantiated altera_up_avalon_video_decoder "Video_In"
+Info: Video_In_Clipper: Starting generation of the video clipper
+Info: Video_In_Clipper: "D5M_Subsystem" instantiated altera_up_avalon_video_clipper "Video_In_Clipper"
+Info: Video_In_DMA: Starting Generation of Video DMA Controller
+Info: Video_In_DMA: "D5M_Subsystem" instantiated altera_up_avalon_video_dma_controller "Video_In_DMA"
+Info: Video_In_RGB_Resampler: Starting Generation of Video RGB Resampler
+Info: Video_In_RGB_Resampler: "D5M_Subsystem" instantiated altera_up_avalon_video_rgb_resampler "Video_In_RGB_Resampler"
+Info: Video_In_Scaler: Starting Generation of Video Scaler
+Info: Video_In_Scaler: "D5M_Subsystem" instantiated altera_up_avalon_video_scaler "Video_In_Scaler"
+Info: avalon_st_adapter: Inserting error_adapter: error_adapter_0
+Info: mm_interconnect_0: "D5M_Subsystem" instantiated altera_mm_interconnect "mm_interconnect_0"
+Info: rst_controller: "D5M_Subsystem" instantiated altera_reset_controller "rst_controller"
+Info: Video_In_DMA_avalon_dma_master_translator: "mm_interconnect_0" instantiated altera_merlin_master_translator "Video_In_DMA_avalon_dma_master_translator"
+Info: Video_In_DMA_avalon_dma_control_slave_translator: "mm_interconnect_0" instantiated altera_merlin_slave_translator "Video_In_DMA_avalon_dma_control_slave_translator"
+Info: Video_In_DMA_avalon_dma_master_agent: "mm_interconnect_0" instantiated altera_merlin_master_agent "Video_In_DMA_avalon_dma_master_agent"
+Info: Video_In_DMA_avalon_dma_control_slave_agent: "mm_interconnect_0" instantiated altera_merlin_slave_agent "Video_In_DMA_avalon_dma_control_slave_agent"
+Info: Video_In_DMA_avalon_dma_control_slave_agent_rsp_fifo: "mm_interconnect_0" instantiated altera_avalon_sc_fifo "Video_In_DMA_avalon_dma_control_slave_agent_rsp_fifo"
+Info: router: "mm_interconnect_0" instantiated altera_merlin_router "router"
+Info: router_001: "mm_interconnect_0" instantiated altera_merlin_router "router_001"
+Info: cmd_demux: "mm_interconnect_0" instantiated altera_merlin_demultiplexer "cmd_demux"
+Info: cmd_mux: "mm_interconnect_0" instantiated altera_merlin_multiplexer "cmd_mux"
+Info: rsp_mux: "mm_interconnect_0" instantiated altera_merlin_multiplexer "rsp_mux"
+Info: Reusing file C:/intelFPGA_lite/18.1/332-lab-2/Lab2_ECE332_2021/verilog/D5M_Subsystem/synthesis/submodules/altera_merlin_arbitrator.sv
+Info: Video_In_DMA_avalon_dma_control_slave_cmd_width_adapter: "mm_interconnect_0" instantiated altera_merlin_width_adapter "Video_In_DMA_avalon_dma_control_slave_cmd_width_adapter"
+Info: Reusing file C:/intelFPGA_lite/18.1/332-lab-2/Lab2_ECE332_2021/verilog/D5M_Subsystem/synthesis/submodules/altera_merlin_burst_uncompressor.sv
+Info: avalon_st_adapter: "mm_interconnect_0" instantiated altera_avalon_st_adapter "avalon_st_adapter"
+Info: error_adapter_0: "avalon_st_adapter" instantiated error_adapter "error_adapter_0"
+Info: D5M_Subsystem: Done "D5M_Subsystem" with 23 modules, 55 files
+Info: qsys-generate succeeded.
+Info: Finished: Create HDL design files for synthesis
