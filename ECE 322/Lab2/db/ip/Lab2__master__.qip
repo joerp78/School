@@ -1,6 +1,0 @@
-set_global_assignment -name QIP_FILE [file join $::quartus(qip_path) Video_In_Subsystem/Video_In_Subsystem.qip]
-set_global_assignment -name QIP_FILE [file join $::quartus(qip_path) VGA_Subsystem/VGA_Subsystem.qip]
-set_global_assignment -name QIP_FILE [file join $::quartus(qip_path) Edge_Detection_Subsystem/Edge_Detection_Subsystem.qip]
-set_global_assignment -name QIP_FILE [file join $::quartus(qip_path) D5M_Subsystem/D5M_Subsystem.qip]
-set_global_assignment -name QIP_FILE [file join $::quartus(qip_path) Computer_System/Computer_System.qip]
-set_global_assignment -name QIP_FILE [file join $::quartus(qip_path) Audio_Subsystem/Audio_Subsystem.qip]
