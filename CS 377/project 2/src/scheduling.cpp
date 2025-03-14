@@ -102,25 +102,22 @@ list<Process> sjf(pqueue_arrival workload) {
   while(!work.empty() || !sorted.empty()){
     while(!work.empty() && work.top().arrival <= time)
     {
-      Process p = work.top();
-      sorted.push(p);
+      sorted.push(work.top());
       work.pop(); 
     }
 
-    if (sorted.empty() && !work.empty()){
+    if (sorted.empty()){
       time = work.top().arrival;
       continue; 
     }
 
-    while(!sorted.empty()){
       Process p = sorted.top();
+      sorted.pop();
       p.first_run = time;
       time += p.duration; 
       p.completion = time;
-
-      sorted.pop();
       complete.push_back(p);
-    }
+    
   }
 
   return complete;
@@ -212,19 +209,7 @@ list<Process> rr(pqueue_arrival workload) {
       ready.push(p);
     }
 
-    if (running && qRemaining == 0) {
-      //cout << '3' << endl;
-      if (remaining > 0){
-      Process preempted = *running;     
-      preempted.duration = remaining;
-      ready.push(preempted);
-      }
-      delete running;
-      running = nullptr; 
-      qRemaining = tQuantum;
-    }
-
-    if (!ready.empty() && !running){
+    if (running == nullptr && !ready.empty()){
       //cout << '4' << endl;
       Process next = ready.front();
       ready.pop();
@@ -250,7 +235,16 @@ list<Process> rr(pqueue_arrival workload) {
         running = nullptr;
         //cout << '7' << endl;
 
-      } 
+      }
+      
+      else if (qRemaining == 0){
+        Process preempted = *running;
+        preempted.duration = remaining;
+        ready.push(preempted);
+        delete running;
+        running = nullptr;
+      }
+      
     } else {
       time++;
       //cout << '8' << endl;
@@ -284,7 +278,7 @@ float avg_response(list<Process> processes) {
 
   for(auto it = processes.begin(); it != processes.end(); ++it){
     Process p = *it;
-    ResSum += p.first_run;
+    ResSum += (p.first_run - p.arrival);
   }
 
   avgRes = ResSum/size; 
