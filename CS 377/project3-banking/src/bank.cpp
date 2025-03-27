@@ -92,8 +92,7 @@ Bank::Bank(int N) {
  */
 Bank::~Bank() {
 
-  (&bank_lock);
-
+  pthread_mutex_destroy(&bank_lock); 
   for(int i = 0; i < num; i ++){
     pthread_mutex_destroy(&accounts[i].lock); 
   }  

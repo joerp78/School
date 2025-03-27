@@ -37,12 +37,55 @@ int con_items; // total number of items consumed
  *
  */
 void InitBank(int p, int c, int size, char *filename) {
-  Bank Bank(10);
-  load_ledger(filename); 
-  *bb(size);
+  bank = new Bank(10);
+  bb = new BoundedBuffer<Ledger*>(size);
+  pthread_t* producers = new pthread_t[p];
+  pthread_t* consumers = new pthread_t[c];
+  int* workerIDs = new int[c]; 
+  pthread_mutex_init(&ledger_lock, NULL);
+
+
+
+  if (load_ledger(filename) < 0){
+    cout << "ERR: FILE NOT READ" << endl;
+    delete bank;
+    delete bb;
+    delete[] producers;
+    delete[] consumers;
+    delete[] workerIDs;
+    pthread_mutex_destroy(&ledger_lock); 
+    return;
+  }  
 
   max_items = ledger.size(); 
 
+  for(int i = 0; i < p; i ++){
+    int check = pthread_create(&producers[i], NULL, producer, NULL);
+    assert(check == 0);
+  }
+
+  for(int i = 0; i < p; i ++){
+    int check = pthread_join(producers[i], NULL);
+    assert(check == 0);
+  }
+
+  for(int i = 0; i < c; i++){
+    workerIDs[i] = i; 
+    int check = pthread_create(&consumers[i], NULL, consumer, (void*)&workerIDs[i]);
+    assert(check == 0);
+  }
+
+  for(int i = 0; i < c; i++){
+    int check = pthread_join(consumers[i], NULL);
+    assert(check == 0);
+  }
+
+  delete[] producers;
+  delete[] consumers;
+  pthread_mutex_destroy(&ledger_lock);
+
+
+  return; 
 }
 
 /**
@@ -78,11 +121,11 @@ int load_ledger(char *filename) {
   while(fscanf(fptr, "%d %d %d %d", &acc, &other, &amount, &mode) == 4){
     Ledger* newLedger = new Ledger;
 
-    newLedger[ledgerID].acc = acc;
-    newLedger[ledgerID].other = other; 
-    newLedger[ledgerID].amount = amount; 
-    newLedger[ledgerID].mode = mode;
-    newLedger[ledgerID].ledgerID = ledgerID;
+    newLedger->acc = acc;
+    newLedger->other = other; 
+    newLedger->amount = amount; 
+    newLedger->mode = mode;
+    newLedger->ledgerID = ledgerID;
     pthread_mutex_lock(&ledger_lock);
     ledger.push_back(newLedger); 
     pthread_mutex_unlock(&ledger_lock);
@@ -117,7 +160,24 @@ int load_ledger(char *filename) {
  * @return NULL after completing ledger processing.
  */
 void *consumer(void *workerID) {
+  int id = *((int*)workerID);
+  pthread_mutex_lock(&ledger_lock);
+  auto entry = bb->remove(); 
+  pthread_mutex_unlock(&ledger_lock);
+
+  if(entry->mode == D){
+    bank->deposit(id, entry->ledgerID, entry->acc, entry->amount);
+  }
   
+  else if(entry->mode == T){
+    bank->transfer(id, entry->ledgerID, entry->acc, entry->other, entry->amount);
+  }
+  
+  else if(entry->mode == W){
+    bank->withdraw(id, entry->ledgerID, entry->acc, entry->amount);
+  }
+  
+  return NULL; 
 }
 
 /**
@@ -142,14 +202,19 @@ void *consumer(void *workerID) {
  */
 void* producer(void *) {
   // TODO: producer thread, see instruction for implementation
-  if(ledger.size != 0){
-    auto current = ledger.front()
-    
-    while(ledger.size > 0){
-      
+  pthread_mutex_lock(&ledger_lock);
+  if(ledger.empty()){
+    cout << "ERR: NOTHING IN LEDGER" << endl; 
+    pthread_mutex_unlock(&ledger_lock);
+    return NULL;
+  }  
+    while(ledger.size() > 0){
+      Ledger* entry = ledger.front(); 
+      ledger.pop_front();
+      pthread_mutex_unlock(&ledger_lock);
+
+      bb->append(entry); 
     }
 
-  }
-
-
+  return NULL; 
 }
