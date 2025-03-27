@@ -80,13 +80,16 @@ void InitBank(int p, int c, int size, char *filename) {
 
   for(int i = 0; i < c; i++){
     int check = pthread_join(consumers[i], NULL);
-    assert(check == 0);
+    //assert(check == 0);
   }
 
-  cout << "running" << endl;
+  //cout << "running" << endl;
 
+  delete bank;
+  delete bb;
   delete[] producers;
   delete[] consumers;
+  delete[] workerIDs;
   pthread_mutex_destroy(&ledger_lock);
 
 
@@ -143,6 +146,8 @@ int load_ledger(char *filename) {
     ledgerID++; 
   }
 
+
+
   fclose(fptr);
   return 0; 
 
@@ -175,14 +180,16 @@ void *consumer(void *workerID) {
   while(true){
     
     pthread_mutex_lock(&ledger_lock);
-    if (con_items >= max_items){
+    if (con_items == max_items){
       pthread_mutex_unlock(&ledger_lock);
+      //cout << "ENDED" << endl;
       break;
     }
+    con_items++;
     pthread_mutex_unlock(&ledger_lock);    
     
-    
     Ledger* entry = bb->remove(); 
+    
 
     if(entry->mode == D){
       bank->deposit(id, entry->ledgerID, entry->acc, entry->amount);
@@ -195,12 +202,11 @@ void *consumer(void *workerID) {
     else if(entry->mode == W){
       bank->withdraw(id, entry->ledgerID, entry->acc, entry->amount);
     }
-    pthread_mutex_lock(&ledger_lock);
-    con_items++;
-    pthread_mutex_unlock(&ledger_lock); 
+    //pthread_mutex_lock(&ledger_lock);
+    //con_items++;
+    //pthread_mutex_unlock(&ledger_lock); 
     
   }
-  cout << con_items << endl;
   return NULL; 
 }
 
