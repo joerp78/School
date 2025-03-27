@@ -62,10 +62,10 @@ void Bank::recordSucc(string message) {
 Bank::Bank(int N) {
   pthread_mutex_init(&bank_lock, NULL);
   num = N;
-  int num_succ = 0;
-  int num_fail = 0;
+  num_succ = 0;
+  num_fail = 0;
 
-  Account accounts[N];
+  accounts = new Account[N];
 
   for(int i = 0; i < num; i ++){
     accounts[i].accountID = i; 
@@ -73,7 +73,7 @@ Bank::Bank(int N) {
     pthread_mutex_init(&accounts[i].lock,NULL); 
   }   
 
-
+  //print_account();
 
 }
 
@@ -96,8 +96,8 @@ Bank::~Bank() {
   for(int i = 0; i < num; i ++){
     pthread_mutex_destroy(&accounts[i].lock); 
   }  
-  free(accounts);  
 
+  delete[] accounts; 
 }
 
 /**
@@ -116,8 +116,10 @@ Bank::~Bank() {
  * @return 0 on success.
  */
 int Bank::deposit(int workerID, int ledgerID, int accountID, int amount) {
-
-  
+  pthread_mutex_lock(&accounts[accountID].lock);
+  accounts[accountID].balance += amount;
+  recordSucc(DEPOSIT_MSG(SUCC, workerID, ledgerID, accountID, amount));
+  pthread_mutex_unlock(&accounts[accountID].lock);
 
   return 0;
 }
@@ -146,10 +148,20 @@ int Bank::deposit(int workerID, int ledgerID, int accountID, int amount) {
  * @return 0 on success, -1 on failure.
  */
 int Bank::withdraw(int workerID, int ledgerID, int accountID, int amount) {
-
-
-
-  return 0;
+  pthread_mutex_lock(&accounts[accountID].lock);
+  int current_value =  accounts[accountID].balance;
+  
+  if(current_value >= amount){
+    accounts[accountID].balance = current_value - amount; 
+    recordSucc(WITHDRAW_MSG(SUCC, workerID, ledgerID, accountID, amount));
+    pthread_mutex_unlock(&accounts[accountID].lock);
+    return 0;
+  }
+  else{
+    recordFail(WITHDRAW_MSG(ERR, workerID, ledgerID, accountID, amount));
+    pthread_mutex_unlock(&accounts[accountID].lock);
+    return -1;
+  }
 }
 
 /**
@@ -179,7 +191,22 @@ int Bank::withdraw(int workerID, int ledgerID, int accountID, int amount) {
  * @param amount The amount to transfer.
  * @return 0 on success, -1 on error.
  */
-int Bank::transfer(int workerID, int ledgerID, int srcID, int destID,
-                   unsigned int amount) {
-  return 0;
+int Bank::transfer(int workerID, int ledgerID, int srcID, int destID, unsigned int amount) {
+  
+  pthread_mutex_lock(&accounts[srcID].lock);
+  if(accounts[srcID].balance >= amount){
+    accounts[srcID].balance -= amount;
+    pthread_mutex_lock(&accounts[destID].lock);
+    accounts[destID].balance += amount; 
+    recordSucc(TRANSFER_MSG(SUCC, workerID, ledgerID, srcID, destID, amount));
+    pthread_mutex_unlock(&accounts[srcID].lock);
+    pthread_mutex_unlock(&accounts[destID].lock);
+    return 0;
+  }
+  else{
+    recordFail(TRANSFER_MSG(ERR, workerID, ledgerID, srcID, destID, amount));
+    pthread_mutex_unlock(&accounts[srcID].lock);
+    return -1;
+  }
+ 
 }

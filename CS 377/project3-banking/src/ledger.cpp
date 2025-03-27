@@ -37,6 +37,7 @@ int con_items; // total number of items consumed
  *
  */
 void InitBank(int p, int c, int size, char *filename) {
+  
   bank = new Bank(10);
   bb = new BoundedBuffer<Ledger*>(size);
   pthread_t* producers = new pthread_t[p];
@@ -64,16 +65,19 @@ void InitBank(int p, int c, int size, char *filename) {
     assert(check == 0);
   }
 
-  for(int i = 0; i < p; i ++){
-    int check = pthread_join(producers[i], NULL);
-    assert(check == 0);
-  }
-
   for(int i = 0; i < c; i++){
     workerIDs[i] = i; 
     int check = pthread_create(&consumers[i], NULL, consumer, (void*)&workerIDs[i]);
     assert(check == 0);
   }
+
+
+  for(int i = 0; i < p; i ++){
+    int check = pthread_join(producers[i], NULL);
+    assert(check == 0);
+  }
+  
+  cout << "running" << endl;
 
   for(int i = 0; i < c; i++){
     int check = pthread_join(consumers[i], NULL);
@@ -126,6 +130,12 @@ int load_ledger(char *filename) {
     newLedger->amount = amount; 
     newLedger->mode = mode;
     newLedger->ledgerID = ledgerID;
+
+    cout << acc << endl;
+    cout << other << endl;
+    cout << amount << endl;
+    cout << mode << endl;
+
     pthread_mutex_lock(&ledger_lock);
     ledger.push_back(newLedger); 
     pthread_mutex_unlock(&ledger_lock);
