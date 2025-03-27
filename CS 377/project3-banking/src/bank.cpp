@@ -73,7 +73,7 @@ Bank::Bank(int N) {
     pthread_mutex_init(&accounts[i].lock,NULL); 
   }   
 
-  //print_account();
+  print_account();
 
 }
 

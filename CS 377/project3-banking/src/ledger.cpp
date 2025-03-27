@@ -77,12 +77,13 @@ void InitBank(int p, int c, int size, char *filename) {
     assert(check == 0);
   }
   
-  cout << "running" << endl;
 
   for(int i = 0; i < c; i++){
     int check = pthread_join(consumers[i], NULL);
     assert(check == 0);
   }
+
+  cout << "running" << endl;
 
   delete[] producers;
   delete[] consumers;
@@ -131,10 +132,10 @@ int load_ledger(char *filename) {
     newLedger->mode = mode;
     newLedger->ledgerID = ledgerID;
 
-    cout << acc << endl;
-    cout << other << endl;
-    cout << amount << endl;
-    cout << mode << endl;
+    //cout << acc << endl;
+    //cout << other << endl;
+    //cout << amount << endl;
+    //cout << mode << endl;
 
     pthread_mutex_lock(&ledger_lock);
     ledger.push_back(newLedger); 
@@ -171,22 +172,35 @@ int load_ledger(char *filename) {
  */
 void *consumer(void *workerID) {
   int id = *((int*)workerID);
-  pthread_mutex_lock(&ledger_lock);
-  auto entry = bb->remove(); 
-  pthread_mutex_unlock(&ledger_lock);
+  while(true){
+    
+    pthread_mutex_lock(&ledger_lock);
+    if (con_items >= max_items){
+      pthread_mutex_unlock(&ledger_lock);
+      break;
+    }
+    pthread_mutex_unlock(&ledger_lock);    
+    
+    
+    Ledger* entry = bb->remove(); 
 
-  if(entry->mode == D){
-    bank->deposit(id, entry->ledgerID, entry->acc, entry->amount);
+    if(entry->mode == D){
+      bank->deposit(id, entry->ledgerID, entry->acc, entry->amount);
+    }
+    
+    else if(entry->mode == T){
+      bank->transfer(id, entry->ledgerID, entry->acc, entry->other, entry->amount);
+    }
+    
+    else if(entry->mode == W){
+      bank->withdraw(id, entry->ledgerID, entry->acc, entry->amount);
+    }
+    pthread_mutex_lock(&ledger_lock);
+    con_items++;
+    pthread_mutex_unlock(&ledger_lock); 
+    
   }
-  
-  else if(entry->mode == T){
-    bank->transfer(id, entry->ledgerID, entry->acc, entry->other, entry->amount);
-  }
-  
-  else if(entry->mode == W){
-    bank->withdraw(id, entry->ledgerID, entry->acc, entry->amount);
-  }
-  
+  cout << con_items << endl;
   return NULL; 
 }
 
@@ -212,18 +226,18 @@ void *consumer(void *workerID) {
  */
 void* producer(void *) {
   // TODO: producer thread, see instruction for implementation
-  pthread_mutex_lock(&ledger_lock);
-  if(ledger.empty()){
-    cout << "ERR: NOTHING IN LEDGER" << endl; 
-    pthread_mutex_unlock(&ledger_lock);
-    return NULL;
-  }  
-    while(ledger.size() > 0){
-      Ledger* entry = ledger.front(); 
-      ledger.pop_front();
+  while(true){
+    pthread_mutex_lock(&ledger_lock);
+    if(ledger.empty()){
+      //cout << "ERR: NOTHING IN LEDGER" << endl; 
       pthread_mutex_unlock(&ledger_lock);
+      break;
+    }  
+        Ledger* entry = ledger.front(); 
+        ledger.pop_front();
+        pthread_mutex_unlock(&ledger_lock);
 
-      bb->append(entry); 
+        bb->append(entry); 
     }
 
   return NULL; 

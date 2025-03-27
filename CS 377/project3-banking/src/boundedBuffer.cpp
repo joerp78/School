@@ -122,7 +122,7 @@ T BoundedBuffer<T>::remove() {
   // TODO: remove and return a data item from the circular buffer
   pthread_mutex_lock(&buffer_lock);
 
-  while(buffer_cnt == buffer_size){
+  while(buffer_cnt == 0){
     pthread_cond_wait(&buffer_not_empty, &buffer_lock);
   }
   T data = buffer[buffer_first];
