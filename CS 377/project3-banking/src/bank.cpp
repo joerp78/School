@@ -195,19 +195,29 @@ int Bank::withdraw(int workerID, int ledgerID, int accountID, int amount) {
  */
 int Bank::transfer(int workerID, int ledgerID, int srcID, int destID, unsigned int amount) {
   
-  pthread_mutex_lock(&accounts[srcID].lock);
+  if(srcID == destID){
+    recordFail(TRANSFER_MSG(ERR, workerID, ledgerID, srcID, destID, amount));
+    return -1;
+  }
+  
+  int first = min(srcID, destID);
+  int second = max(srcID, destID);
+
+  pthread_mutex_lock(&accounts[first].lock);
+  pthread_mutex_lock(&accounts[second].lock);
+
   if(accounts[srcID].balance >= amount){
     accounts[srcID].balance -= amount;
-    pthread_mutex_lock(&accounts[destID].lock);
     accounts[destID].balance += amount; 
     recordSucc(TRANSFER_MSG(SUCC, workerID, ledgerID, srcID, destID, amount));
-    pthread_mutex_unlock(&accounts[srcID].lock);
-    pthread_mutex_unlock(&accounts[destID].lock);
+
+    pthread_mutex_unlock(&accounts[second].lock);
+    pthread_mutex_unlock(&accounts[first].lock);
     return 0;
-  }
-  else{
+  } else{
     recordFail(TRANSFER_MSG(ERR, workerID, ledgerID, srcID, destID, amount));
-    pthread_mutex_unlock(&accounts[srcID].lock);
+    pthread_mutex_unlock(&accounts[second].lock);
+    pthread_mutex_unlock(&accounts[first].lock);
     return -1;
   }
  
