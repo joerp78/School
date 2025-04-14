@@ -131,6 +131,7 @@ void split(size_t size, node_t **previous, node_t **free_block,
 
   *allocated = (header_t *)alloc_node; 
   (*allocated)->size = size; 
+  (*allocated)->magic = MAGIC;
 
   if(*previous == NULL){
     head = *free_block;
@@ -166,7 +167,7 @@ void *my_malloc(size_t size) {
 
   split(size, &previous, &free_block, &allocated);
 
-  return (void *)(((char *)free_block) + sizeof(header_t));; 
+  return (void *)(((char *)allocated) + sizeof(header_t));; 
 }
 
 /*
