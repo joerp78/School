@@ -126,21 +126,34 @@ void split(size_t size, node_t **previous, node_t **free_block,
   node_t *alloc_node = *free_block;
   size_t actualSize = size + sizeof(header_t);
 
-  *free_block = (node_t *)(((char *)alloc_node) + actualSize);
-  (*free_block)->size = alloc_node->size - actualSize; 
+  if (alloc_node->size >= actualSize + sizeof(node_t)){
+    node_t *newNode = (node_t *)(((char *)alloc_node) + actualSize);
+    newNode->size = alloc_node->size - actualSize;
+    newNode->next = alloc_node->next;
+
+    
+    if(*previous == NULL){
+      head = newNode;
+    }
+    else{
+      (*previous)->next = newNode; 
+    }
+    
+    (*free_block)->size = alloc_node->size - actualSize; 
+
+    *free_block = newNode;
+  } else {
+    if(*previous == NULL){
+      head = alloc_node->next;
+    }
+    else{
+      (*previous)->next = alloc_node->next; 
+    }   
+  }
 
   *allocated = (header_t *)alloc_node; 
   (*allocated)->size = size; 
   (*allocated)->magic = MAGIC;
-
-  if(*previous == NULL){
-    head = *free_block;
-  }
-  else{
-    (*previous)->next = *free_block; 
-  }
-
-  return;
 
 }
 
@@ -200,7 +213,7 @@ void coalesce(node_t *free_block) {
   node_t *next = head;
   node_t *prev = NULL;
 
-  while(next != NULL && next < free_block){
+  while(next && next < free_block){
     prev = next; 
     next = next->next;
   }
@@ -215,21 +228,23 @@ void coalesce(node_t *free_block) {
 
   
 
-  size_t block_size = free_block->size + sizeof(node_t);
-  size_t prev_size = prev->size + sizeof(node_t);
+  //size_t block_size = free_block->size + sizeof(node_t);
+  //size_t prev_size = prev->size + sizeof(node_t);
 
 
-  if (next != NULL && (char *)free_block + block_size == (char *)next){
+  if (next && 
+    (char *)free_block + (free_block->size + sizeof(node_t)) == (char *)next){
       free_block->size += next->size + sizeof(node_t);
       free_block->next = next->next;
 
    }
 
    
-  if (prev != NULL && ((char *)prev) + prev_size == (char* )free_block){
+  if (prev){ 
+   if (((char *)prev) + (prev->size + sizeof(node_t)) == (char* )free_block){
     prev->size += free_block->size + sizeof(node_t);
     prev->next = free_block->next;
-
+    }
  }
 
  return;

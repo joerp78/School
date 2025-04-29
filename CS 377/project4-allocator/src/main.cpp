@@ -3,7 +3,7 @@
 
 int main() {
   void *allocated[10];
-
+  print_free_list();
   printf("Available memory before: %zd.\n", available_memory());
   for (int i = 0; i < 10; i++) {
     allocated[i] = my_malloc(100);
