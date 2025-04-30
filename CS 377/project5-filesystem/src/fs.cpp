@@ -226,8 +226,30 @@ int myFileSystem::read(char name[8], int blockNum, char buf[1024]) {
 
   // Read in the block => Read in 1024 bytes from this location
   //   into the buffer "buf"
+  idxNode temp;
+  int targetIdx = -1;
+  for (int i = 0; i < 16; ++i){
+    disk.seekg(128 + i * sizeof(idxNode), ios::beg);
+    disk.read(reinterpret_cast<char*>(&temp), sizeof(temp));
+    
+    if (!disk.good()) return -1;
+    if (temp.used == 1 && strncmp(temp.name, name, 8) == 0){
+      targetIdx = i;
+      break;
+    }
+  }
+  if (targetIdx < 0) return -1;
+  if (blockNum < 0 || blockNum >= temp.size) return -1; 
 
-  return -1;
+  int dataBlock = temp.blockPointers[blockNum];
+
+  disk.seekg((static_cast<streamoff>(dataBlock) * block_size), ios::beg);
+  if (!disk.good()) return -1;
+
+  disk.read(buf, block_size);
+  if (!disk.good()) return -1;
+  
+  return 1;
 }  // End read
 
 int myFileSystem::write(char name[8], int blockNum, char buf[1024]) {
@@ -246,12 +268,37 @@ int myFileSystem::write(char name[8], int blockNum, char buf[1024]) {
 
   // Write the block! => Write 1024 bytes from the buffer "buff" to
   //   this location
+  idxNode temp;
+  int targetIdx = -1;
+  for (int i = 0; i < 16; ++i){
+    disk.seekg(128 + i * sizeof(idxNode), ios::beg);
+    disk.read(reinterpret_cast<char*>(&temp), sizeof(temp));
+    
+    if (!disk.good()) return -1;
+    if (temp.used == 1 && strncmp(temp.name, name, 8) == 0){
+      targetIdx = i;
+      break;
+    }
+  }
+  if (targetIdx < 0) return -1;
+  if (blockNum < 0 || blockNum >= temp.size) return -1; 
 
-  return -1;
+  int dataBlock = temp.blockPointers[blockNum];
+
+  disk.seekg((static_cast<streamoff>(dataBlock) * block_size), ios::beg);
+  if (!disk.good()) return -1;
+
+  disk.write(buf, block_size);
+  if (!disk.good()) return -1;
+  
+  disk.flush();
+  return 1;
 }  // end write
 
 int myFileSystem::close_disk() {
   // close the disk!
+  disk.flush();
   disk.close();
-  return 0;
+  if (disk.fail()) return 0;
+  else return 1; 
 }
