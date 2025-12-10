@@ -1,0 +1,18 @@
+#
+# trace11.txt - Forward SIGINT to every process in foreground process group
+#
+tsh> ./mysplit 4
+Job [1] (8767) terminated by signal 2
+tsh> /bin/ps a
+  PID TTY      STAT   TIME COMMAND
+ 1116 tty7     Ssl+   3:15 /usr/lib/xorg/Xorg -core :0 -seat seat0 -auth /var/run/lightdm/root/:0 -nolisten tcp vt7 -novtswitch
+ 1117 tty1     Ss+    0:00 /sbin/agetty --noclear tty1 linux
+ 2556 tty3     Ss     0:00 /bin/login --
+ 2591 tty3     S      0:00 -bash
+ 4682 tty3     S      0:00 ./tsh -p
+ 4783 tty3     S      0:00 ./tsh -p
+ 5062 tty3     S      0:00 ./tsh -p
+ 5146 tty3     S      0:00 ./tsh -p
+ 8764 tty3     S+     0:00 /usr/bin/perl ./sdriver.pl -t trace11.txt -s ./tsh -a -p
+ 8765 tty3     S+     0:00 ./tsh -p
+ 8772 tty3     R      0:00 /bin/ps a
